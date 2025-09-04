@@ -35,34 +35,15 @@ $NET1_DEV \\
 $NET2_NET \\
 $NET2_DEV
 EOF
-	echo "creating .build/start_local.sh"
-	cat << EOF >> .build/start_local.sh
+	echo "creating .build/start.sh"
+	cat << EOF >> .build/start.sh
 #!/bin/bash
 $QEMU -name $VMNAME -M q35 -accel kvm -bios OVMF-pure-efi.fd -cpu host -m 4G -smp 4 -boot menu=on $QARGS \\
 -uuid $TARGET_SYS_UUID \\
 -device nvme,drive=NVME1,max_ioqpairs=4,physical_block_size=4096,logical_block_size=4096,use-intel-id=on,serial=$SN0,bootindex=1 \\
 -drive file=$BOOT_DISK,if=none,id=NVME1 \\
 -device nvme,drive=NVME2,max_ioqpairs=4,physical_block_size=4096,logical_block_size=4096,use-intel-id=on,serial=$SN1 \\
--drive file=$SPARE_DISK,if=none,id=NVME2 \\
-$NET0_NET \\
-$NET0_DEV \\
-$NET1_NET \\
-$NET1_DEV \\
-$NET2_NET \\
-$NET2_DEV
-exit
-EOF
-	echo "creating .build/start_nbft.sh"
-	cat << EOF >> .build/start_nbft.sh
-#!/bin/bash
-$QEMU -name $VMNAME -M q35 -accel kvm -bios OVMF-pure-efi.fd -cpu host -m 4G -smp 4 -boot menu=on $QARGS \\
--uuid $TARGET_SYS_UUID \\
--device nvme,drive=NVME1,max_ioqpairs=4,physical_block_size=4096,logical_block_size=4096,use-intel-id=on,serial=$SN0,bootindex=1 \\
--drive file=$BOOT_DISK,if=none,id=NVME1 \\
--device nvme,drive=NVME2,max_ioqpairs=4,physical_block_size=4096,logical_block_size=4096,use-intel-id=on,serial=$SN2 \\
--drive file=disks/nvme2.qcow2,if=none,id=NVME2 \\
--device nvme,drive=NVME3,max_ioqpairs=4,physical_block_size=4096,logical_block_size=4096,use-intel-id=on,serial=$SN1,addr=7 \\
--drive file=$SPARE_DISK,if=none,id=NVME3 \\
+-drive file=$NBFT_DISK,if=none,id=NVME2 \\
 $NET0_NET \\
 $NET0_DEV \\
 $NET1_NET \\
@@ -100,16 +81,7 @@ else
     echo "using $BOOT_DISK"
 fi
 
-SPARE_DISK=$(find . -name nvme1.qcow2 -print)
-if [ -z "$SPARE_DISK" ]; then
-    echo " $SPARE_DISK not found!"
-    exit 1
-else
-    SPARE_DISK=$(realpath $SPARE_DISK)
-    echo "using $SPARE_DISK"
-fi
-
-NBFT_DISK=$(find . -name nvme2.qcow2 -print)
+NBFT_DISK=$(find . -name nvme1.qcow2 -print)
 if [ -z "$NBFT_DISK" ]; then
     echo " $NBFT_DISK not found!"
     exit 1
@@ -121,13 +93,12 @@ fi
 create_install_startup
 
 chmod 755 .build/install.sh
-chmod 755 .build/start_local.sh
-chmod 755 .build/start_nbft.sh
+chmod 755 .build/start.sh
 
 check_qargs
 
 if [ $# -gt 3 ] && [ "$4" == "-f" ]; then
-    echo "Skipping install. Run \"./start.sh local\" and then \"./netsetup.sh\" to configure the network."
+    echo "Skipping install. Run \"./start.sh\" and then \"./netsetup.sh\" to configure the network."
     echo ""
     exit 0
 fi
