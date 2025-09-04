@@ -8,8 +8,6 @@ DIR="$(dirname -- "$(realpath -- "$0")")"
 HOST=`hostname`
 VMNAME=`basename $PWD`
 
-START_ACTION="nbft|local"
-
 display_start_help() {
   echo " Usage: ./start.sh <$START_ACTION> "
   echo " "
@@ -23,11 +21,6 @@ display_start_help() {
   echo "          $0 nbft"
   echo " "
 }
-
-if [ $# -lt 1 ] ; then
-        display_start_help
-        exit 1
-fi
 
 if [ ! -d .build ]; then
 	echo "Error: $PWD/.build not found!"
@@ -51,28 +44,4 @@ fi
 
 check_qargs
 
-case "$1" in
-    nbft)
-		if [ ! -f disks/nvme2.qcow2 ]; then
-			echo "Error: $PWD/disks/nvme2.qcow2 not found!"
-			exit 1
-		fi
-        check_netport
-        bash .build/start_nbft.sh &
-        echo ""
-        echo " target-vm is running with nbft disk"
-        echo " Log into the root account and run \"./start-nvme-target.sh\" to start the NVMe/TCP soft target."
-    ;;
-    local)
-        check_netport
-        bash .build/start_local.sh &
-        echo ""
-        echo " target-vm is running with out nbft disk"
-        echo " NVMe/TCP soft target is inoperable."
-    ;;
-    *)
-    echo " Error: $1 not valid"
-    display_start_help
-    exit 1
-    ;;
-esac
+bash .build/start.sh &
