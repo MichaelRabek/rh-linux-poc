@@ -419,3 +419,7 @@ fi
 
 EOF
 }
+
+generate_serial_number() {
+    hexdump -vn8 -e'4/4 "%08X" 1 "\n"' /dev/urandom
+}
