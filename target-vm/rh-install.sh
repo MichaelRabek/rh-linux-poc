@@ -47,6 +47,19 @@ else
     echo "using $NBFT_DISK"
 fi
 
+if [ $N_EXTRA_DRIVES -gt 0 ] ; then
+    mkdir -p /tmp/rh-linux-poc/$(basename $PWD)
+fi
+
+EXTRA_NVMES=()
+for ((i=1; i<=N_EXTRA_DRIVES; i++)); do
+    NVME_ID=$((i + 2))
+    ADDR=$((0x0b + i - 1))
+    EXTRA_DISK="disks/nvme${NVME_ID}.qcow2"
+    make $EXTRA_DISK DRIVE_CAP=20G
+    EXTRA_NVMES+=("--qemu-commandline=-device nvme,drive=NVME${NVME_ID},bus=pcie.0,addr=0x$(printf '%x' $ADDR),max_ioqpairs=4,physical_block_size=4096,logical_block_size=4096,use-intel-id=on,serial=$(generate_serial_number) -drive file=$(realpath $EXTRA_DISK),if=none,id=NVME${NVME_ID}")
+done
+
 virt-install \
     --name $(basename $PWD) \
     --uuid $TARGET_SYS_UUID \
@@ -55,6 +68,7 @@ virt-install \
     --boot loader=/usr/share/OVMF/OVMF_CODE.fd,loader_secure=no \
     --qemu-commandline="-device nvme,drive=NVME1,bus=pcie.0,addr=0x07,max_ioqpairs=4,physical_block_size=4096,logical_block_size=4096,use-intel-id=on,serial=$SN0 -drive file=$BOOT_DISK,if=none,id=NVME1" \
     --qemu-commandline="-device nvme,drive=NVME2,bus=pcie.0,addr=0x0a,max_ioqpairs=4,physical_block_size=4096,logical_block_size=4096,use-intel-id=on,serial=$SN1 -drive file=$NBFT_DISK,if=none,id=NVME2" \
+    "${EXTRA_NVMES[@]}" \
     --network passt,portForward=127.0.0.1:$TARGET_PORT:22 \
     --network bridge=virbr1,mac=$TARGET_MAC2,model=virtio \
     --network bridge=virbr2,mac=$TARGET_MAC3,model=virtio \
