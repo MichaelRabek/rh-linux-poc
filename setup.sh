@@ -149,7 +149,7 @@ install_network() {
 
             if check_conn $netdev; then
                 MAC=$(nmcli -t -f general.hwaddr -e yes dev show $netdev | sed 's/^GENERAL.HWADDR://')
-                sudo nmcli con down $netdev
+                sudo nmcli dev down $netdev
                 sudo nmcli con add type bridge ifname br0 autoconnect yes stp off ethernet.cloned-mac-address $MAC
                 sudo nmcli con add type bridge-slave ifname $netdev master br0
                 sudo nmcli con up bridge-br0
