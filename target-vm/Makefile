@@ -5,9 +5,14 @@ DRIVE_CAP ?= 70G
 EXTRA_DRIVES ?= 0
 NET_TYPE ?= "localhost"
 
-.PHONY: start stop rh-install clean network
+.PHONY: install rh-start stop rh-install clean network
 
-start:
+start: install
+
+install: disks/boot.qcow2 disks/nvme1.qcow2 install.sh
+	@bash ./install.sh $(NET_TYPE) $(EXTRA_DRIVES)
+
+rh-start:
 	-virsh start $(VMNAME)
 	virt-viewer target-vm >/dev/null 2>&1 &
 	@echo
