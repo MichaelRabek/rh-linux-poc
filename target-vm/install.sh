@@ -6,6 +6,29 @@ DIR="$(dirname -- "$(realpath -- "$0")")"
 . $DIR/../global_vars.sh
 . $DIR/../vm_lib.sh
 
+if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    VM_NAME=$(basename $PWD)
+    echo "Usage: $0 [NET_CONN] [N_EXTRA_DRIVES]"
+    echo "   or: $0 [N_EXTRA_DRIVES]"
+    echo ""
+    echo "Install a Linux distribution on the $VM_NAME with configurable networking."
+    echo ""
+    echo "Arguments:"
+    echo "  NET_CONN        Network connection type: 'localhost' or 'bridged' (default: localhost)"
+    echo "  N_EXTRA_DRIVES  Number of additional NVMe drives to create (default: 0)"
+    echo "                  The $VM_NAME always gets 2 base NVMe drives (boot and NBFT)"
+    echo ""
+    echo "Examples:"
+    echo "  $0                    # Create $VM_NAME with localhost networking"
+    echo "  $0 1                  # Create $VM_NAME with localhost networking, 1 extra drive"
+    echo "  $0 bridged            # Create $VM_NAME with bridged networking"
+    echo "  $0 localhost 3        # Create $VM_NAME with localhost networking, 3 extra drives"
+    echo ""
+    echo "Options:"
+    echo "  -h, --help      Show this help message and exit"
+    exit 0
+fi
+
 HOST=`hostname`
 VMNAME=`basename $PWD`
 QEMU=none
@@ -13,64 +36,20 @@ BRIDGE_HELPER=none
 QARGS=""
 ISO_FILE=""
 
-create_install_startup() {
-	rm -rf .build
-	mkdir .build
-	echo "creating .build/install.sh"
-	NET1_NET="-netdev bridge,br=virbr1,id=net1,helper=$BRIDGE_HELPER"
-	NET1_DEV="-device virtio-net-pci,netdev=net1,mac=$MAC2,addr=5"
-	NET2_NET="-netdev bridge,br=virbr2,id=net2,helper=$BRIDGE_HELPER"
-	NET2_DEV="-device virtio-net-pci,netdev=net2,mac=$MAC3,addr=6"
-	cat << EOF >> .build/install.sh
-#!/bin/bash
-$QEMU -name $VMNAME -M q35 -accel kvm -bios OVMF-pure-efi.fd -cpu host -m 4G -smp 4 $QARGS \\
--uuid $TARGET_SYS_UUID \\
--cdrom $ISO_FILE \\
--device nvme,drive=NVME1,max_ioqpairs=4,physical_block_size=4096,logical_block_size=4096,use-intel-id=on,serial=$SN0 \\
--drive file=$BOOT_DISK,if=none,id=NVME1 \\
-$NET0_NET \\
-$NET0_DEV \\
-$NET1_NET \\
-$NET1_DEV \\
-$NET2_NET \\
-$NET2_DEV
-EOF
-	echo "creating .build/start.sh"
-	cat << EOF >> .build/start.sh
-#!/bin/bash
-$QEMU -name $VMNAME -M q35 -accel kvm -bios OVMF-pure-efi.fd -cpu host -m 4G -smp 4 -boot menu=on $QARGS \\
--uuid $TARGET_SYS_UUID \\
--device nvme,drive=NVME1,max_ioqpairs=4,physical_block_size=4096,logical_block_size=4096,use-intel-id=on,serial=$SN0,bootindex=1 \\
--drive file=$BOOT_DISK,if=none,id=NVME1 \\
--device nvme,drive=NVME2,max_ioqpairs=4,physical_block_size=4096,logical_block_size=4096,use-intel-id=on,serial=$SN1 \\
--drive file=$NBFT_DISK,if=none,id=NVME2 \\
-$NET0_NET \\
-$NET0_DEV \\
-$NET1_NET \\
-$NET1_DEV \\
-$NET2_NET \\
-$NET2_DEV
-exit
-EOF
-}
-
-rm -f .start
-rm -rf .build
-
-check_install_args $# "$1" "$2" "$3"
-
-if [ $# -gt 3 ] && [ "$4" == "-f" ]; then
-    echo "Reusing current local boot disks"
+# Parse parameters
+if [[ "$1" == "localhost" || "$1" == "bridged" ]]; then
+    NET_CONN="$1"
+    N_EXTRA_DRIVES=${2:-0}
+elif [[ "$1" =~ ^[0-9]+$ ]]; then
+    NET_CONN="localhost"
+    N_EXTRA_DRIVES="$1"
 else
-    create_boot_disk
-    create_local_disk
+    NET_CONN="localhost"
+    N_EXTRA_DRIVES=${1:-0}
 fi
 
-if [ $# -gt 3 ] && [ "$4" == "-n" ]; then
-    echo "Reusing current nbft boot disk"
-else
-    create_nbft_disk
-fi
+find_iso
+check_qemu_command
 
 BOOT_DISK=$(find . -name boot.qcow2 -print)
 if [ -z "$BOOT_DISK" ]; then
@@ -90,18 +69,24 @@ else
     echo "using $NBFT_DISK"
 fi
 
-create_install_startup
-
-chmod 755 .build/install.sh
-chmod 755 .build/start.sh
+case "$NET_CONN" in
+    localhost)
+        # NET0_NET="-netdev user,id=net0,net=$NET_CIDR,hostfwd=tcp::$NET_PORT-:22"
+        NET0_NET="-netdev user,id=net0,hostfwd=tcp::$TARGET_PORT-:22"
+        NET0_DEV="-device e1000,netdev=net0,addr=4"
+        echo "$TARGET_PORT" > .netport
+    ;;
+    bridged)
+        NET0_NET="-netdev bridge,br=br0,id=net0,helper=$BRIDGE_HELPER"
+        NET0_DEV="-device virtio-net-pci,netdev=net0,mac=$TARGET_MAC1,addr=4"
+    ;;
+    *)
+    echo " Error: invalid argument $3"
+        exit 1
+    ;;
+esac
 
 check_qargs
-
-if [ $# -gt 3 ] && [ "$4" == "-f" ]; then
-    echo "Skipping install. Run \"./start.sh\" and then \"./netsetup.sh\" to configure the network."
-    echo ""
-    exit 0
-fi
 
 echo ""
 echo " Be sure to create the root account with ssh access."
@@ -112,4 +97,22 @@ echo ""
 echo " Next step will be to run the \"./netsetup.sh\" script."
 echo ""
 
-bash .build/install.sh &
+NET1_NET="-netdev bridge,br=virbr1,id=net1,helper=$BRIDGE_HELPER"
+NET1_DEV="-device virtio-net-pci,netdev=net1,mac=$TARGET_MAC2,addr=5"
+NET2_NET="-netdev bridge,br=virbr2,id=net2,helper=$BRIDGE_HELPER"
+NET2_DEV="-device virtio-net-pci,netdev=net2,mac=$TARGET_MAC3,addr=6"
+
+$QEMU -name $VMNAME -M q35 -accel kvm -bios OVMF-pure-efi.fd -cpu host -m 4G -smp 4 $QARGS \
+-uuid $TARGET_SYS_UUID \
+-boot order=cd \
+-cdrom $ISO_FILE \
+-device nvme,drive=NVME1,max_ioqpairs=4,physical_block_size=4096,logical_block_size=4096,use-intel-id=on,serial=$SN0 \
+-drive file=$BOOT_DISK,if=none,id=NVME1 \
+-device nvme,drive=NVME2,max_ioqpairs=4,physical_block_size=4096,logical_block_size=4096,use-intel-id=on,serial=$SN1 \
+-drive file=$NBFT_DISK,if=none,id=NVME2 \
+$NET0_NET \
+$NET0_DEV \
+$NET1_NET \
+$NET1_DEV \
+$NET2_NET \
+$NET2_DEV
