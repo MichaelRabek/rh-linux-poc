@@ -428,53 +428,35 @@ process by running the *host-vm/start.sh* script.
 ## Create the target-vm
 
 You must `cd ../target-vm` to run the scripts needed to start the `target-vm`.
-The `target-vm` install script is slightly different because it doesn't require
-the use of the pre-production `boot.iso`.
 
 ### Step 1 install the target-vm
 
-By default the pre-production *boot.iso* can be used by specifying
-`./install.sh ""`. Otherwise, you'll need to specify the same version of fedora as
-shown above.
+#### Method 1 Automated installation
 
-E.g.:
+If the OS on your downloaded ISO belongs to the Red Hat family, you can install the target VM click-free.
+Run `make rh-install` and wait for completion. **Do not kill the command**, the console window will close automatically
+after the installation is over.
 
-```
-> ./install.sh fedora-36
-using /data/jmeneghi/rh-linux-poc/ISO/Fedora-Everything-netinst-x86_64-36-1.5.iso
-creating .build/install.sh
-creating .build/start.sh
+Afterwards, you can run `make rh-start` to start the `target-vm`.
+Don't forget to either run `shutdown -h now` in the `target-vm`
+or `make stop` here on your machine when done working on the VM.
+Simply closing the monitor window **will not** shut the VM down.
 
- Be sure to create the root account with ssh access.
- Reboot to complete the install and login to the root account.
- Then "shutdown -h now" the VM.
+#### Method 2 Manual installation
 
- Next step will be restart the VM with "./start.sh" script.
-```
+If the OS on your downloaded ISO is not from the Red Hat family of distros or you just prefer to install
+the OS manually, run `make install`.
 
 Follow the instructions on the screen by connecting to the VM console with
-`vncviewer` (if needed) and complete the Fedora installation. Note: You can use all
-of the defaults for installation, as before.  The only change in defaults needs
-be: *be sure to create a root account with ssh access*.
+`vncviewer` (if needed) and complete the OS installation.
+The only change in the defaults needs be: *be sure to create a root account with ssh access*.
 
 After the installation reboot login to the root account on the target-vm and
 `shutdown -h now` the VM.
 
-### Step 2 start the target-vm
+To start the VM again, run `make start`.
 
-Now restart the `target-vm` by running the `./start.sh` script.
-
-Example:
-
-```
-> ./start.sh
-
- Log into the root account and record the interface names for networks 2 and 3.
- Use the "ip -br address show" command to display interface names
-
- Next step will be to run the "./netsetup.sh" script.
-```
-### Step 3 login to the target-vm
+### Step 2 login to the target-vm
 
 Login to the root account on the target-vm and display the network configuration.
 
@@ -488,7 +470,7 @@ enp0s5           UP             fe80::6944:6969:83d:aef1/64
 enp0s6           UP             fe80::6e22:d7dd:43f0:5e21/64
 ```
 
-### Step 4 run ./netsetup.sh on the hypervisor
+### Step 3 run ./netsetup.sh on the hypervisor
 
 The `./netsetup.sh` utility is run on the hypervisor in the *target-vm*
 directory.  Using the infromation from the `ip -br addr show` command on the
@@ -514,7 +496,7 @@ tcp.json            100% 2031    10.3MB/s   00:00
  Login to target-vm/root and run "./netsetup.sh" to complete the VM configuration
 ```
 
-### Step 5 run ./netsetup.sh on the target-vm
+### Step 4 run ./netsetup.sh on the target-vm
 
 For example:
 
@@ -537,7 +519,7 @@ of the main distribution, and quality may vary.
  Then run "host-vm/start.sh" on the hypervisor to boot the host-vm with NVMe/TCP
 ```
 
-### Step 6 run start-tcp-target.sh on the target-vm
+### Step 5 run start-tcp-target.sh on the target-vm
 
 The following step configures and runs the NVMe/TCP softarget on the
 `target-vm`.  Following this step the `target-vm` is now serving the
