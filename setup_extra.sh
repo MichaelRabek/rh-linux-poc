@@ -86,6 +86,37 @@ check_version_rh() {
     esac
 }
 
+install_edk2() {
+    pushd $DIR
+    if [ ! -d edk2 ]; then
+        mkdir -p edk2
+        pushd edk2
+        git clone -b timberland_upstream-dev-full git@github.com:timberland-sig/edk2.git
+        pushd edk2
+        git config url."ssh://git@github.com/timberland-sig".insteadOf https://github.com/timberland-sig
+        git submodule update --init --recursive
+        popd
+        popd
+    fi
+    pushd edk2/edk2
+    make -C BaseTools clean
+    rm -rf Build
+    make -C BaseTools
+    source edksetup.sh
+    build -t GCC5 -a X64 -p OvmfPkg/OvmfPkgX64.dsc
+    mkdir -p $DIR/ISO
+    rm -f  $DIR/host-vm/OVMF_CODE.fd
+    rm -f  $DIR/host-vm/vm_vars.fd
+    rm -f  $DIR/host-vm/eficonfig/NvmeOfCli.efi
+    rm -f  $DIR/host-vm/eficonfig/VConfig.efi
+    cp -fv Build/OvmfX64/DEBUG_GCC5/FV/OVMF_CODE.fd $DIR/host-vm/OVMF_CODE.fd
+    cp -fv Build/OvmfX64/DEBUG_GCC5/FV/OVMF_VARS.fd $DIR/host-vm/vm_vars.fd
+    cp -fv Build/OvmfX64/DEBUG_GCC5/FV/OVMF_VARS.fd $DIR/ISO/OVMF_VARS.fd
+    cp -fv Build/OvmfX64/DEBUG_GCC5/X64/VConfig.efi $DIR/host-vm/eficonfig/VConfig.efi
+    cp -fv Build/OvmfX64/DEBUG_GCC5/X64/NvmeOfCli.efi $DIR/host-vm/eficonfig/NvmeOfCli.efi
+    popd
+}
+
 check_version_iso() {
     if [ -z "${VERSION}" ]; then
         echo "  Invalid argument: ${NEWARGS}" >&2
@@ -342,6 +373,9 @@ case "${MODE}" in
         check_version_iso
         install_devel
         build_copr_iso $VERSION
+    ;;
+    edk2)
+        install_edk2
     ;;
     copr)
         #check_version_rh
