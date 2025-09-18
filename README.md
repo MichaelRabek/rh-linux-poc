@@ -45,25 +45,6 @@ Run the following commands to download and install the *prebuilt* Timberland SIG
 
 The next step is to go to [Setup your Virtual Machines](#setup-your-virtual-machines) and install the *host-vm*
 
-# Developer Build
-
-1. Create your user account, enable [sudo](https://developers.redhat.com/blog/2018/08/15/how-to-enable-sudo-on-rhel#:~:text=DR%3A%20Basic%20sudo-,TL%3BDR%3A%20Basic%20sudo,out%20and%20back%20in%20again) access, and configure your github [ssh-key](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account).
-2. Set up a [copr](https://docs.pagure.org/copr.copr/user_documentation.html#quick-start) user account and add [.config/copr](https://copr.fedorainfracloud.org/api/) to your user account.
-3. Clone this repository with `git clone git@github.com:timberland-sig/rh-linux-poc.git`.
-4. Create a working branch with `git checkout -b MYBRANCH` to keep configuration changes for your test bed.
-5. Edit the *global_vars.sh* file and set the `COPR_USER` and `COPR_PROJECT` variables (c.f. `corp-cli whoami` and `corp-cli list`).
-
-Now run the following commands to build and install your NVMe/TCP Boot test environment:
-
-```
-  ./setup.sh user                # this will validate your user account - run this multiple times
-  ./setup.sh net                 # this will modify your hypervisor network - run this only once
-  ./setup.sh virt                # this will install QEMU (only on Fedora) - run this only once
-  ./setup.sh -m build fedora-37  # this will build all needed rpms and artifacts and create a fedora-37 bootable iso
-```
-
-The next step is to go to [Setup your Virtual Machines](#setup-your-virtual-machines) and install the *host-vm*.
-
 # How it works:
 
 We create two Virtual Machines connected with two virtual networks.  The first
@@ -143,22 +124,11 @@ account.
 *Note: this only works with Fedora and should be run with caution. When in
 doubt, install and setup qemu yourself, manually.*
 
-Run `./setup.sh pkgs` - This script will install all needed rpms to complete your
-dev/test environment.
+Run `./setup.sh iso` - This script will prompt you to enter a URL of an ISO disk image file.
+This file will be downloaded and used for installing an operating system on the virtual machines.
 
-## Build all Timberland-sig artifacts
-
-Run `./setup.sh -m build fedora-37` - This script clones all of the timberland-sig
-repositories, builds all needed artifiacts and rpms, and installs them in your
-personal copr repo. It then to creates a bootable iso image with the
-[lorax](https://weldr.io/lorax/lorax.html) uility. Artifacts and rpms are
-created in the follow directories:
-
-| Directory  | Decription |
-| :-----   | :----      |
-|`edk2`    | Contains the timberland-sig edk2 repository. The built artifacts are contained in: *edk2/edk2/Build/OvmfX64/DEBUG_GCC5/X64*.  The spefic artifacts need to boot with nvme/tcp are moved to: *host-vm/eficonfig/NvmeOfCli.efi*, *host-vm/OVMF_CODE.fd* and *host-vm/vm_vars.fd*. |
-| `lorax_results` | contains the bootable iso generated from the build process. This iso is created using the generated rpm from your `copr.fedorainfracloud.org` project. The specific location of the iso is: *lorax_results/images/boot.iso*`.  This is the default iso used by the *host-vm\install.sh* and *target-vm\install.sh* scripts.|
-| `copr.fedorainfracloud.org` | Contains rpms for nvme-cli, libnvme and dracut. (e.g.: see [johnmeneghini's](https://copr.fedorainfracloud.org/coprs/johnmeneghini/timberland-sig/) copr repository. |
+Run `./setup.sh edk2` - This script will download the latest Timerland-SIG release of the EDK2 firmware
+and preapre it for use by the `host-vm`.
 
 # Setup your Virtual Machines
 
@@ -630,5 +600,38 @@ Then update your running QEMU testbed with the new new *rpms* with the following
 8. boot the host-vm with the `host-vm/start.sh attempt` script
 
 This procedure can be used to develop and test your changes to *nvme-cli* and *dracut* in support of NVMe/TCP boot.
+
+# For developers
+
+
+
+## Build all Timberland-sig artifacts
+
+Run `./setup.sh -m build fedora-37` - This script clones all of the timberland-sig
+repositories, builds all needed artifiacts and rpms, and installs them in your
+personal copr repo. It then to creates a bootable iso image with the
+[lorax](https://weldr.io/lorax/lorax.html) uility. Artifacts and rpms are
+created in the follow directories:
+
+| Directory  | Decription |
+| :-----   | :----      |
+|`edk2`    | Contains the timberland-sig edk2 repository. The built artifacts are contained in: *edk2/edk2/Build/OvmfX64/DEBUG_GCC5/X64*.  The spefic artifacts need to boot with nvme/tcp are moved to: *host-vm/eficonfig/NvmeOfCli.efi*, *host-vm/OVMF_CODE.fd* and *host-vm/vm_vars.fd*. |
+| `lorax_results` | contains the bootable iso generated from the build process. This iso is created using the generated rpm from your `copr.fedorainfracloud.org` project. The specific location of the iso is: *lorax_results/images/boot.iso*`.  This is the default iso used by the *host-vm\install.sh* and *target-vm\install.sh* scripts.|
+| `copr.fedorainfracloud.org` | Contains rpms for nvme-cli, libnvme and dracut. (e.g.: see [johnmeneghini's](https://copr.fedorainfracloud.org/coprs/johnmeneghini/timberland-sig/) copr repository. |
+
+## Developer Build
+
+1. Create your user account, enable [sudo](https://developers.redhat.com/blog/2018/08/15/how-to-enable-sudo-on-rhel#:~:text=DR%3A%20Basic%20sudo-,TL%3BDR%3A%20Basic%20sudo,out%20and%20back%20in%20again) access, and configure your github [ssh-key](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account).
+2. Set up a [copr](https://docs.pagure.org/copr.copr/user_documentation.html#quick-start) user account and add [.config/copr](https://copr.fedorainfracloud.org/api/) to your user account.
+3. Create a working branch with `git checkout -b MYBRANCH` to keep configuration changes for your test bed.
+4. Edit the *global_vars.sh* file and set the `COPR_USER` and `COPR_PROJECT` variables (c.f. `corp-cli whoami` and `corp-cli list`).
+
+Now run the following commands to build and install your NVMe/TCP Boot test environment:
+
+```
+  ./setup.sh -m build fedora-37  # this will build all needed rpms and artifacts and create a fedora-37 bootable iso
+```
+
+The next step is to go to [Setup your Virtual Machines](#setup-your-virtual-machines) and install the *host-vm*.
 
 **END**
