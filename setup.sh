@@ -279,7 +279,7 @@ install_prebuilt_iso() {
     # https://dl.fedoraproject.org/pub/fedora/linux/releases/42/Everything/x86_64/os/
 
     DOWNLOAD_URL="$(cat .durl)"
-    read -r -p "Enter URL of the ISO or DVD ($DOWNLOAD_URL) :" INPUT
+    read -r -p "Enter URL of the ISO or DVD ($DOWNLOAD_URL): " INPUT
     if [ -z "$INPUT" ]; then
         INPUT="$DOWNLOAD_URL"
     fi
@@ -288,7 +288,7 @@ install_prebuilt_iso() {
         echo "No URL provided"
         exit 1
     fi
-    ISOVERSION=$(echo $DOWNLOAD_URL | awk -F/ '{print $NF}')
+    ISOVERSION=$(echo $DOWNLOAD_URL | awk -F/ '{print $NF}' | cut -d'?' -f1)
     if [ -z "$ISOVERSION" ]; then
         echo "No .iso found"
         exit 1
@@ -297,7 +297,7 @@ install_prebuilt_iso() {
     if [ ! -f ISO/$ISOVERSION ]; then
         pushd ISO
         echo "wget ${DOWNLOAD_URL}"
-        wget --no-check-certificate ${DOWNLOAD_URL}
+        wget --no-check-certificate -O ${ISOVERSION} ${DOWNLOAD_URL}
 		if [ $? -eq 0 ]; then
 			echo "${ISOVERSION}" > $DIR/.diso
 		fi
