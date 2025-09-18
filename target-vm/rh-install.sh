@@ -96,7 +96,7 @@ virt-install \
     --network bridge=virbr1,mac=$TARGET_MAC2,model=virtio \
     --network bridge=virbr2,mac=$TARGET_MAC3,model=virtio \
     --check mac_in_use=off \
-    --location $ISO_FILE \
+    --location $ISO_FILE,kernel=images/pxeboot/vmlinuz,initrd=images/pxeboot/initrd.img \
     --initrd-inject ./anaconda-ks.cfg \
     --extra-args 'inst.ks=file:/anaconda-ks.cfg inst.text' \
     --console pty,target.type=virtio \
