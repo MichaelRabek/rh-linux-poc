@@ -75,7 +75,7 @@ done
 
 echo "using $NET_CONN network"
 if [ $NET_CONN = "localhost" ] ; then
-    PRIMARY_NETWORK="--network passt,portForward=127.0.0.1:$TARGET_PORT:22"
+    PRIMARY_NETWORK="--network passt,portForward=127.0.0.1:$TARGET_PORT:22,model=virtio"
 elif [ $NET_CONN = "bridged" ] ; then
     PRIMARY_NETWORK="--network bridge=br0"
 else
