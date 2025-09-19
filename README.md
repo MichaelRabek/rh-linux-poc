@@ -38,9 +38,11 @@ Run the following commands to download and install the *prebuilt* Timberland SIG
   sudo dnf install -y git unzip mkfs.vfat
   git clone https://github.com/timberland-sig/rh-linux-poc.git
   cd rh-linux-poc
-  ./setup.sh net                 # this will modify your hypervisor network - run this only once
-  ./setup.sh virt                # this will install QEMU (only on Fedora) - run this only once
-  ./setup.sh prebuilt fedora-37  # this will download fedora-37 with all of the prebuilt Timberland-sig rpms and artifacts.
+  ./setup.sh user   # this will install essential packages - only has to be ran once
+  ./setup.sh net    # this will modify your hypervisor network - run this only once
+  ./setup.sh virt   # this will install QEMU (only on Fedora) - only has to be ran once
+  ./setup.sh iso    # this will ask for a URL to an ISO file with an OS installer - may be ran again if you want to try a different distro
+  ./setup.sh edk2   # this will download and install the Timberland-sig artifacts - only has to be ran once
 ```
 
 The next step is to go to [Setup your Virtual Machines](#setup-your-virtual-machines) and install the *host-vm*
