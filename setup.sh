@@ -257,6 +257,7 @@ install_prebuilt_iso() {
         echo "No URL provided"
         exit 1
     fi
+    echo "$DOWNLOAD_URL" > .durl
     ISOVERSION=$(echo $DOWNLOAD_URL | awk -F/ '{print $NF}' | cut -d'?' -f1)
     if [ -z "$ISOVERSION" ]; then
         echo "No .iso found"
