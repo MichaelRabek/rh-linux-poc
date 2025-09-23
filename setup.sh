@@ -197,10 +197,6 @@ install_virt() {
 install_edk2_zip() {
     pushd $DIR
 
-	if [ ! -f .pkgs ]; then
-		sudo dnf install -y wget zip unzip
-	fi
-
     if [ ! -d ISO ]; then
         mkdir -p ISO
     fi
