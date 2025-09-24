@@ -4,13 +4,14 @@ VMNAME := $(shell basename $$PWD)
 DRIVE_CAP ?= 70G
 EXTRA_DRIVES ?= 0
 NET_TYPE ?= "localhost"
+QEMU_ARGS ?= ""
 
 .PHONY: install rh-start stop rh-install clean network
 
 start: install
 
 install: disks/boot.qcow2 disks/nvme1.qcow2 install.sh
-	@bash ./install.sh $(NET_TYPE) $(EXTRA_DRIVES)
+	@bash ./install.sh $(NET_TYPE) $(EXTRA_DRIVES) $(QEMU_ARGS)
 
 rh-start:
 	-virsh start $(VMNAME)
@@ -29,6 +30,7 @@ rh-install: disks/boot.qcow2 disks/nvme1.qcow2 rh-install.sh anaconda-ks.cfg
 	@bash ./rh-install.sh $(NET_TYPE) $(EXTRA_DRIVES)
 
 disks/%.qcow2:
+	mkdir -p disks
 	qemu-img create -f qcow2 $@ $(DRIVE_CAP)
 # There is a potential problem with this and that is that it is
 # dependant on SELinux
