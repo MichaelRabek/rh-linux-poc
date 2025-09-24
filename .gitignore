@@ -22,6 +22,7 @@ cscope.*
 .pkgs2
 .durl
 .diso
+.devel
 .usr
 .macaddr
 edk2/*
