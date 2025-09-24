@@ -8,8 +8,9 @@ DIR="$(dirname -- "$(realpath -- "$0")")"
 
 if [[ "$1" == "-h" || "$1" == "--help" ]]; then
     VM_NAME=$(basename $PWD)
-    echo "Usage: $0 [NET_CONN] [N_EXTRA_DRIVES]"
-    echo "   or: $0 [N_EXTRA_DRIVES]"
+    echo "Usage: $0 [NET_CONN] [N_EXTRA_DRIVES] [QEMU_ARGS]"
+    echo "   or: $0 [N_EXTRA_DRIVES] [QEMU_ARGS]"
+    echo "   or: $0 [QEMU_ARGS]"
     echo ""
     echo "Install a Linux distribution on the $VM_NAME with configurable networking."
     echo ""
@@ -17,12 +18,14 @@ if [[ "$1" == "-h" || "$1" == "--help" ]]; then
     echo "  NET_CONN        Network connection type: 'localhost' or 'bridged' (default: localhost)"
     echo "  N_EXTRA_DRIVES  Number of additional NVMe drives to create (default: 0)"
     echo "                  The $VM_NAME always gets 2 base NVMe drives (boot and NBFT)"
+    echo "  QEMU_ARGS       Optional extra commands for QEMU"
     echo ""
     echo "Examples:"
-    echo "  $0                    # Create $VM_NAME with localhost networking"
-    echo "  $0 1                  # Create $VM_NAME with localhost networking, 1 extra drive"
-    echo "  $0 bridged            # Create $VM_NAME with bridged networking"
-    echo "  $0 localhost 3        # Create $VM_NAME with localhost networking, 3 extra drives"
+    echo "  $0                         # Create $VM_NAME with localhost networking"
+    echo "  $0 1                       # Create $VM_NAME with localhost networking, 1 extra drive"
+    echo "  $0 bridged                 # Create $VM_NAME with bridged networking"
+    echo "  $0 localhost 3             # Create $VM_NAME with localhost networking, 3 extra drives"
+    echo "  $0 localhost 0 -vnc :0     # Create $VM_NAME with a VNC connection"
     echo ""
     echo "Options:"
     echo "  -h, --help      Show this help message and exit"
@@ -40,12 +43,18 @@ ISO_FILE=""
 if [[ "$1" == "localhost" || "$1" == "bridged" ]]; then
     NET_CONN="$1"
     N_EXTRA_DRIVES=${2:-0}
+    shift 2
+    QEMU_ARGS=$@
 elif [[ "$1" =~ ^[0-9]+$ ]]; then
     NET_CONN="localhost"
     N_EXTRA_DRIVES="$1"
+    shift 1
+    QEMU_ARGS=$@
 else
     NET_CONN="localhost"
     N_EXTRA_DRIVES=${1:-0}
+    shift 1
+    QEMU_ARGS=$@
 fi
 
 find_iso
@@ -115,4 +124,7 @@ $NET0_DEV \
 $NET1_NET \
 $NET1_DEV \
 $NET2_NET \
-$NET2_DEV
+$NET2_DEV \
+$QEMU_ARGS
+
+exit $?
