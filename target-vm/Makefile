@@ -6,6 +6,36 @@ EXTRA_DRIVES ?= 0
 NET_TYPE ?= "localhost"
 QEMU_ARGS ?= ""
 
+help:
+	@echo "Target VM Makefile - Build and manage virtual machines"
+	@echo ""
+	@echo "Available targets:"
+	@echo "  help          Show this help message"
+	@echo "  install       Manually install an OS from an ISO onto a fresh boot disk using QEMU"
+	@echo "  start         Start the VM with an existing boot disk using QEMU"
+	@echo "  rh-start      Automatically install the OS with Kickstart and start the VM (Red Hat distros only)"
+	@echo "  clean         Remove all VM disk images and temporary files"
+	@echo ""
+	@echo "Disk creation targets:"
+	@echo "  disks/boot.qcow2      Create an empty boot disk image ($(DRIVE_CAP))"
+	@echo "  disks/nvme1.qcow2     Create an empty NVMe disk image ($(DRIVE_CAP))"
+	@echo "  disks/rh-boot.qcow2   Build a pre-installed disk image using livemedia-creator (Red Hat distros only)"
+	@echo "  boot.iso              Create a custom ISO with the embedded Kickstart config"
+	@echo ""
+	@echo "Configuration variables:"
+	@echo "  DRIVE_CAP     Disk capacity (default: $(DRIVE_CAP))"
+	@echo "  EXTRA_DRIVES  Number of extra NVMe drives (default: $(EXTRA_DRIVES))"
+	@echo "  NET_TYPE      Network type: localhost/bridged (default: $(NET_TYPE))"
+	@echo "  QEMU_ARGS     Additional QEMU arguments"
+	@echo ""
+	@echo "Examples:"
+	@echo "  make install                    # Manually install an OS on a fresh disk"
+	@echo "  make start                      # Start the VM with an existing disk"
+	@echo "  make rh-start                   # Start the VM with the auto-installed disk (Red Hat)"
+	@echo "  make DRIVE_CAP=100G install     # Install with 100GB disks"
+	@echo "  make NET_TYPE=bridged start     # Start with bridged networking"
+	@echo ""
+
 rh-start: disks/nvme1.qcow2 install.sh
 # disks/rh-boot.qcow2 is not an explicit dependency because it consumes
 # .build/rh-boot.qcow2 for its creation. This, however, confuses GNU Make
@@ -51,4 +81,4 @@ clean:
 	-rm .netport
 	-rm .netaddr
 
-.PHONY: install start rh-start stop clean
+.PHONY: help install start rh-start stop clean
