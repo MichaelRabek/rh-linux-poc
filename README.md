@@ -2,26 +2,21 @@
 
 This repository contains packages, scripts and instructions to assit in the set up and deployment of a QEMU based NVMe/TCP boot POC. The prerequisites for this POC include:
 
-1. An X86_64 based hardware platform with 32GB of memory, 12 (VT-x) cores, at least 200GB of spare storage space.
+1. An X86_64 based hardware platform with 32GB of memory, 12 (VT-x) cores, at least 20GB of spare storage space.
 2. A hardwired ethernet connection with access to a DHCP server and the public network.
-3. A recent version of CentOS Stream 9, RHEL 9 or Fedora 36/37 installed on your host - this will be your hypervisor.
+3. A recent version of Fedora 42 installed on your host - this will be your hypervisor.
 4. A user account with with [sudo](https://developers.redhat.com/blog/2018/08/15/how-to-enable-sudo-on-rhel#:~:text=DR%3A%20Basic%20sudo-,TL%3BDR%3A%20Basic%20sudo,out%20and%20back%20in%20again) access so you can administer the hypervisor.
-5. (optional) A user account with [git](https://git-scm.com/book/en/v2/Getting-Started-First-Time-Git-Setup) configured so you modify code.
-6. (optional) A valid github login with a [ssh key](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account) configured
+5. (optional) A user account with [git](https://git-scm.com/book/en/v2/Getting-Started-First-Time-Git-Setup) configured so you can modify code.
+6. (optional) A valid github login with an [ssh key](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account) configured
 7. (optional) A valid [copr](https://docs.pagure.org/copr.copr/user_documentation.html#quick-start) account. This requires a [FAS](https://accounts.fedoraproject.org/) account.
 
 This POC was developed on a [ThinkPad T Series
 Laptop](https://www.lenovo.com/us/en/c/laptops/thinkpad/thinkpadt) using a
-modified version of RHEL 8.7 with an [upstream QEMU
-library](https://www.qemu.org/download/) installed. Note that the QEMU version
-distributed with CensOS 9, RHEL 9 and RHEL 8 will not support this POC. It's
-best to use a current version of Fedora for a hypervisor, if possible. To run
-this POC on RHEL or Centos stream you must *deinstall* all libvirt and qemu
-related RPMs and manually compile and install an upstream version of QEMU.
-QEMU version 6.0 and 7.0 are supported.
+modified version of Fedora 42 with an [upstream QEMU
+library](https://www.qemu.org/download/) installed. It's
+best to use a current version of Fedora for a hypervisor, if possible.
 
-*NOTE: Currently this POC has only been tested and proven to work with Fedora
-36 and Fedora 37.  Support for Centos 9 and RHEL 9 are still TBD.*
+*NOTE: Only download DVD ISOs. Netinstall ISOs are **not supported**!*
 
 *NOTE: The scripts used in this repository are all designed to be run from
 a user account with sudo root access. It is not advised to run these scripts on
@@ -103,7 +98,7 @@ Step by step instructions for creating your QEMU Virtual Machines.
 
 Run `./setup.sh user` - This script will install some prerequisite rpms and
 validate that your user account is correctly configured.  If this script shows
-an error. Correct the problem and run it again.
+an error, correct the problem and run it again.
 
 Run `./setup.sh net` - This will modify your hypervisor network configuration and
 create three bridged networks. Run this script with caution because it will
@@ -129,27 +124,29 @@ doubt, install and setup qemu yourself, manually.*
 Run `./setup.sh iso` - This script will prompt you to enter a URL of an ISO disk image file.
 This file will be downloaded and used for installing an operating system on the virtual machines.
 
-Run `./setup.sh edk2` - This script will download the latest Timerland-SIG release of the EDK2 firmware
-and preapre it for use by the `host-vm`.
+Run `./setup.sh edk2` - This script will download the latest Timberland-SIG release of the EDK2 firmware
+and prepare it for use by the `host-vm`. Use `./setup.sh edk2 -s` or `./setup.sh edk2 --source` to build from source instead.
 
 # Setup your Virtual Machines
 
 ## The ./install.sh script
 
 ```
- Usage: install.sh <> ["qemu_args"]
+ Usage: install.sh MODE BOOT_DISK [NET_CONN] [N_EXTRA_DRIVES] [QARGS]
 
- Creates qcow2 disk files and installs a QEMU VM named host-vm
- in the host-vm directory using the installation ISO provided in <iso_file>
+ Install or start a Linux distribution on the VM with configurable networking.
 
- Note: the <iso_file> must be downloaded with "setup.sh prebuilt" first
- Note: pass "" in <iso_file> to use the default lorax_build
+ Arguments:
+   MODE            Operation mode: 'install' or 'start' (required)
+   BOOT_DISK       Path to the boot disk image (required)
+   NET_CONN        Network connection type: 'localhost' or 'bridged' (default: localhost)
+   N_EXTRA_DRIVES  Number of additional NVMe drives to create (default: 0)
+   QARGS           Optional extra commands for QEMU
 
    E.g.:
-          ./install.sh ""
-          ./install.sh "" "-vnc :0"
-          ./install.sh fedora-37 "-vnc :0"
-          ./install.sh fedora-36
+          ./install.sh install disks/boot.qcow2
+          ./install.sh start disks/boot.qcow2 localhost 0 "-vnc :0"
+          ./install.sh install disks/boot.qcow2 bridged
 ```
 
 ## Installing Fedora
@@ -403,30 +400,25 @@ You must `cd ../target-vm` to run the scripts needed to start the `target-vm`.
 
 ### Step 1 install the target-vm
 
-#### Method 1 Automated installation
+#### Method 1 Automated installation (Red Hat family distributions)
 
-If the OS on your downloaded ISO belongs to the Red Hat family, you can install the target VM click-free.
-Run `make rh-install` and wait for completion. **Do not kill the command**, the console window will close automatically
-after the installation is over.
+If the OS on your downloaded ISO belongs to the Red Hat family, you can install the target VM automatically.
+Run `make help` to see all available options, then:
 
-Afterwards, you can run `make rh-start` to start the `target-vm`.
-Don't forget to either run `shutdown -h now` in the `target-vm`
-or `make stop` here on your machine when done working on the VM.
-Simply closing the monitor window **will not** shut the VM down.
+- Run `make rh-start` to start the VM with the pre-installed disk
+
+**Note**: The automated installation uses the anaconda kickstart configuration in `anaconda-ks.cfg`.
 
 #### Method 2 Manual installation
 
-If the OS on your downloaded ISO is not from the Red Hat family of distros or you just prefer to install
-the OS manually, run `make install`.
+For any distribution or if you prefer manual installation:
 
-Follow the instructions on the screen by connecting to the VM console with
-`vncviewer` (if needed) and complete the OS installation.
-The only change in the defaults needs be: *be sure to create a root account with ssh access*.
+- Run `make install` to start manual installation from ISO
+- Connect to the VM console and complete the OS installation
+- **Important**: Create a root account with SSH access during installation
+- After installation, reboot and run `make start` to start the VM
 
-After the installation reboot login to the root account on the target-vm and
-`shutdown -h now` the VM.
-
-To start the VM again, run `make start`.
+Run `make help` to see all available targets and configuration options.
 
 ### Step 2 login to the target-vm
 
