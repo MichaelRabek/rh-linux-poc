@@ -6,37 +6,49 @@ EXTRA_DRIVES ?= 0
 NET_TYPE ?= "localhost"
 QEMU_ARGS ?= ""
 
-.PHONY: install rh-start stop rh-install clean network
+rh-start: disks/nvme1.qcow2 install.sh
+# disks/rh-boot.qcow2 is not an explicit dependency because it consumes
+# .build/rh-boot.qcow2 for its creation. This, however, confuses GNU Make
+# to go rebuild the qcow2 disk unnecessarily.
+	[ -f disks/rh-boot.qcow2 ] || make disks/rh-boot.qcow2
+	@bash ./install.sh start disks/rh-boot.qcow2 $(NET_TYPE) $(EXTRA_DRIVES) $(QEMU_ARGS)
 
-start: install
+start: disks/boot.qcow2 disks/nvme1.qcow2 install.sh
+	@bash ./install.sh start $< $(NET_TYPE) $(EXTRA_DRIVES) $(QEMU_ARGS)
 
-install: disks/boot.qcow2 disks/nvme1.qcow2 install.sh
-	@bash ./install.sh $(NET_TYPE) $(EXTRA_DRIVES) $(QEMU_ARGS)
+install: disks/boot.qcow2
+	@bash ./install.sh install $< $(NET_TYPE) $(EXTRA_DRIVES) $(QEMU_ARGS)
 
-rh-start:
-	-virsh start $(VMNAME)
-	virt-viewer target-vm >/dev/null 2>&1 &
-	@echo
-	@echo "Don't forget to either run \"shutdown -h now\" in the $(VMNAME)"
-	@echo "or \"make stop\" here on the host when done working on the VM."
-	@echo "Simply closing the monitor window will not shut the VM down."
+.build/rh-boot.qcow2: anaconda-ks.cfg
+	-@sudo rmdir .build 2>/dev/null
+# Look up the prebuilt ISO
+	source ../vm_lib.sh && find_iso && sudo livemedia-creator \
+		--virt-uefi \
+		--make-disk --qcow2 \
+		--iso=$$ISO_FILE --ks=$< \
+		--image-name=$$(basename $@) \
+		--resultdir ./.build --arch x86_64
+	sudo chown $$USER:$$USER .build
 
-stop:
-	virsh shutdown $(VMNAME)
-
-# This does not need a lock file because the virt-install command will refuse
-# to run if the guest name 'target-vm' is already in use.
-rh-install: disks/boot.qcow2 disks/nvme1.qcow2 rh-install.sh anaconda-ks.cfg
-	@bash ./rh-install.sh $(NET_TYPE) $(EXTRA_DRIVES)
+disks/rh-boot.qcow2: .build/rh-boot.qcow2
+	sudo mv .build/rh-boot.qcow2 $@
+	sudo chown $$USER:$$USER $@
 
 disks/%.qcow2:
 	mkdir -p disks
 	qemu-img create -f qcow2 $@ $(DRIVE_CAP)
-# There is a potential problem with this and that is that it is
-# dependant on SELinux
-	chcon -t virt_image_t $@
+
+# Simply embed the anaconda kickstart file into the ISO
+boot.iso: anaconda-ks.cfg ../vm_lib.sh
+# Look up the prebuilt ISO
+	source ../vm_lib.sh && find_iso && sudo mkksiso --ks $< $$ISO_FILE $@
 
 clean:
-	-virsh destroy target-vm
-	-virsh undefine target-vm
 	-rm -f disks/*.qcow2
+	-rm -f boot.iso
+	-rm -f *.log
+	-rm -rf .build
+	-rm .netport
+	-rm .netaddr
+
+.PHONY: install start rh-start stop clean
