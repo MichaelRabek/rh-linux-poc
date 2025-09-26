@@ -136,12 +136,22 @@ EOF
     )
 fi
 
+EXTRA_NVMES=()
+for ((i=1; i<=N_EXTRA_DRIVES; i++)); do
+    NVME_ID=$((i + 2))
+    ADDR=$((0x0b + i - 1))
+    EXTRA_DISK="disks/nvme${NVME_ID}.qcow2"
+    make $EXTRA_DISK DRIVE_CAP=20G
+    EXTRA_NVMES+=("-device nvme,drive=NVME${NVME_ID},bus=pcie.0,addr=0x$(printf '%x' $ADDR),max_ioqpairs=4,physical_block_size=4096,logical_block_size=4096,use-intel-id=on,serial=$(generate_serial_number) -drive file=$(realpath $EXTRA_DISK),if=none,id=NVME${NVME_ID}")
+done
+
 $QEMU -name $VMNAME -M q35 -accel kvm -bios OVMF-pure-efi.fd -cpu host -m 4G -smp 4 $QARGS \
 -uuid $TARGET_SYS_UUID \
 $BOOT_OPTIONS \
 -device nvme,drive=NVME1,addr=0x07,max_ioqpairs=4,physical_block_size=4096,use-intel-id=on,serial=$SN0 \
 -drive file=$BOOT_DISK,if=none,id=NVME1 \
 $NBFT_DRIVE_OPTIONS \
+${EXTRA_NVMES[@]} \
 $NET0_NET \
 $NET0_DEV \
 $NET1_NET \
