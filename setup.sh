@@ -42,7 +42,8 @@ install_user() {
     echo " : Installing user environment"
 
     if [ ! -f .usr ]; then
-        sudo dnf install -y vim git wget ethtool net-tools zip unzip nmcli lorax-lmc-novirt pykickstart
+        sudo dnf install -y vim git wget ethtool net-tools zip unzip nmcli \
+            lorax-lmc-novirt pykickstart openssl
         touch .usr
     else
         echo " : Nothing to do!"

@@ -73,12 +73,16 @@ boot.iso: anaconda-ks.cfg ../vm_lib.sh
 # Look up the prebuilt ISO
 	source ../vm_lib.sh && find_iso && sudo mkksiso --ks $< $$ISO_FILE $@
 
+anaconda-ks.cfg: anaconda-ks.cfg.template
+	@read -p "Enter a root password for the target-vm: " -s PASSWORD; echo; sed -e "s|<ROOT_PASSWD>|$$(openssl passwd -1 -stdin <<< $$PASSWORD)|" $< > $@
+
 clean:
 	-rm -f disks/*.qcow2
 	-rm -f boot.iso
 	-rm -f *.log
 	-rm -rf .build
-	-rm .netport
-	-rm .netaddr
+	-rm -f .netport
+	-rm -f .netaddr
+	-rm -f anaconda-ks.cfg
 
 .PHONY: help install start rh-start stop clean
