@@ -38,7 +38,7 @@ network --device=link --bootproto=dhcp --activate
 timezone Europe/Prague --utc
 
 # Root password
-rootpw --iscrypted --allow-ssh $6$VJTQ8oMbQCNV7VUz$DW27EwLMrFXHUCCNl/SR5BPohsomxSQRAQL4YNNB/w1qS1dGyqkqIIs5wfPsFdwO.mQal0Qv3qUcRxIeTqc2.1
+rootpw --iscrypted --allow-ssh <ROOT_PASSWD>
 
 %post
 # Loop through all detected network devices and ensure they are set to auto-connect

@@ -407,7 +407,9 @@ Run `make help` to see all available options, then:
 
 - Run `make rh-start` to start the VM with the pre-installed disk
 
-**Note**: The automated installation uses the anaconda kickstart configuration in `anaconda-ks.cfg`.
+**Note**: The automated installation uses the anaconda kickstart configuration produced from in `anaconda-ks.cfg.template`.
+You will be asked to provide a `root` password for the `target-vm` at the beginning of the setup.
+If you are not running this as root, you will also be asked for **your** `sudo` afterwards. Do not confuse these!
 
 #### Method 2 Manual installation
 
