@@ -183,6 +183,8 @@ install_network() {
         sudo nmcli conn add ifname virbr2 type bridge con-name virbr2 stp yes ipv4.addresses $HOSTGW_CIDR3 ipv4.method manual ipv6.method shared
         ip -h -c -o -br address show virbr2
     fi
+
+    echo "Network interfaces configured!"
 }
 
 install_virt() {
