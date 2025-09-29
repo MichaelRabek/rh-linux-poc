@@ -57,7 +57,8 @@ install: disks/boot.qcow2
 		--make-disk --qcow2 \
 		--iso=$$ISO_FILE --ks=$< \
 		--image-name=$$(basename $@) \
-		--resultdir ./.build --arch x86_64
+		--resultdir ./.build --arch x86_64 \
+		--vnc "sdl"
 	sudo chown $$USER:$$USER .build
 
 disks/rh-boot.qcow2: .build/rh-boot.qcow2
