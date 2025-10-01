@@ -89,8 +89,6 @@ install_devel() {
         if [ -z "$FOO" ]; then
             echo " : No copr user found! "
             exit 1
-        else
-            sed -i "s/^COPR_USER.*/COPR_USER\=$FOO/" global_vars.sh
         fi
 
         touch .devel
