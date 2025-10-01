@@ -315,10 +315,6 @@ while getopts "mh" opt; do
                         display_help >&2
                         exit 0
                 ;;
-                m)
-                        MOCKBUILD=1
-                       # echo "Set mock build to $MOCKBUILD"
-                ;;
                 *)
                         echo "  Invalid argument: -$OPTARG" >&2
                         echo "  Try: \"$0 -h\"" >&2
