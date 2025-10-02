@@ -155,7 +155,6 @@ fi
 #fi
 
 rm -rf efi
-rm -f efi.tgz
 
 if [ $# -gt 3 ] && [ "$4" == "-r" ]; then
 	cp -fv $DIR/../ISO/OVMF_VARS.fd vm_vars.fd

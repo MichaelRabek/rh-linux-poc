@@ -9,11 +9,6 @@ DIR="$(dirname -- "$(realpath -- "$0")")"
 
 VMNAME=`basename $PWD`
 
-# if [ ! -f efi.tgz ]; then
-# 	echo " error efi.tgz file missing"
-# 	exit 1
-# fi
-
 if [ ! -f eficonfig/startup.nsh ]; then
 	echo " error startup.nsh file missing"
 	exit 1
@@ -44,7 +39,6 @@ sudo losetup -D loop1
 sleep 2
 mkdir -p efi
 sudo mount -t vfat -o loop,offset=1048576 $PWD/efidisk $PWD/efi
-# sudo tar xzvf efi.tgz
 sudo mkdir -p $PWD/efi/EFI/BOOT
 sudo cp -v $PWD/eficonfig/startup.nsh $PWD/efi/EFI/BOOT
 sudo cp -v $PWD/eficonfig/NvmeOfCli.efi $PWD/efi/EFI/BOOT
