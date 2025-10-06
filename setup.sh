@@ -12,6 +12,7 @@ MODE="user"
 
 ALL_VERSIONS="fedora-36|fedora-37|fedora-42|centos-stream-9|opensuse-tumbleweed"
 
+set -e
 
 display_help() {
         echo
@@ -20,6 +21,7 @@ display_help() {
         echo "  -h            : display this help"
         echo "  -m            : use mock to build things"
         echo ""
+        echo "  quickstart    : runs user, virt, net, edk2 and also iso if there is no ISO downloaded"
         echo "  user          : setup basic user environment (default)"
         echo "  devel         : setup development environment"
         echo "  virt          : install qemu-kvm environment "
@@ -338,6 +340,15 @@ VERSION=$(echo "${NEWARGS}" | tr -t '/' ' ' | awk '{print $2}')
 #echo "VERSION is == $VERSION"
 
 case "${MODE}" in
+           quick*)
+              install_user
+              install_virt
+              install_edk2_zip
+              install_network
+              if [ ! -f .diso ] ; then
+                  install_prebuilt_iso
+              fi
+           ;;
            user)
               install_user
            ;;

@@ -25,19 +25,34 @@ modify the configuration of your host computer with sudo access by: installing
 packages, creating networks, mounting and unmounting file systems and modifying
 some configuration settings in `/etc` and `/usr/libexec`.*
 
-# Quick Start with the prebuilt environment.
+# Quick Start with the prebuilt environment:
 
-Run the following commands to download and install the *prebuilt* Timberland SIG NVMe/TCP Boot test environment:
+1. **Install prerequisites**
+  ```
+  sudo dnf install -y git unzip mkfs.vfat
+  ```
+
+2. **Clone the repository:**
+  ```
+  git clone https://github.com/timberland-sig/rh-linux-poc.git
+  cd ./rh-linux-poc
+  ```
+
+3. **If this is your first time downloading this repository, you can simply run:**
+  ```
+  ./setup.sh quickstart
+  ```
+
+It will essentially run the following commands to download and install the *prebuilt* Timberland SIG NVMe/TCP Boot test environment:
 
 ```
-  sudo dnf install -y git unzip mkfs.vfat
-  git clone https://github.com/timberland-sig/rh-linux-poc.git
-  cd rh-linux-poc
-  ./setup.sh user   # this will install essential packages - only has to be ran once
-  ./setup.sh net    # this will modify your hypervisor network - run this only once
-  ./setup.sh virt   # this will install QEMU (only on Fedora) - only has to be ran once
-  ./setup.sh iso    # this will ask for a URL to an ISO file with an OS installer - may be ran again if you want to try a different distro
-  ./setup.sh edk2   # this will download and install the Timberland-sig artifacts - only has to be ran once
+./setup.sh user   # this will install essential packages - only has to be ran once
+./setup.sh virt   # this will install QEMU (only on Fedora) - only has to be ran once
+./setup.sh edk2   # this will download and install the Timberland-sig artifacts - only has to be ran once
+./setup.sh net    # this will modify your hypervisor network - run this only once
+./setup.sh iso    # this will ask for a URL to an ISO file with an OS installer
+                  # ↳ may be ran again if you want to try a different distro
+                  # ↳ the quickstart only runs this if no ISO was downloaded in this clone of the repository
 ```
 
 The next step is to go to [Setup your Virtual Machines](#setup-your-virtual-machines) and install the *host-vm*
