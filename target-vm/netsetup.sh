@@ -61,6 +61,7 @@ chmod 755 .build/netsetup.sh
 chmod 755 .build/start-nvme-target.sh
 chmod 755 .build/tcp.json
 chmod 755 .build/hosts.txt
+touch $HOME/.ssh/known_hosts
 
 case "$3" in
     localhost)
