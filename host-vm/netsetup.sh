@@ -38,6 +38,8 @@ rm -f discover_target.sh
 rm -f .build/netsetup.sh
 rm -f .build/hosts.txt
 
+mkdir -p .build
+
 create_netsetup "$1" "$2" "$3"
 add_host_netsetup
 create_hosts_file "$3"

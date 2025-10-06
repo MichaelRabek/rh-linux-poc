@@ -12,6 +12,6 @@ SubnetMask:255.255.255.0
 Gateway:HOSTGW_IP2
 TargetIp:TARGET_IP2
 NQN:SUBNQN
-ConnectTimeout:6000
+ConnectTimeout:TIMEOUT
 DnsMode:FALSE
 $End
