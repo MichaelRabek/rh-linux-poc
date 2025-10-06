@@ -46,6 +46,7 @@ create_discover_target
 chmod 755 discover_target.sh
 chmod 755 .build/netsetup.sh
 chmod 755 .build/hosts.txt
+touch $HOME/.ssh/known_hosts
 
 check_netport
 
