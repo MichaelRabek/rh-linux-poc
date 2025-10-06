@@ -12,7 +12,7 @@ VMNAME=`basename $PWD`
 
 help() {
     cat << EOF
-Usage: $0 <MODE> <OS_LOCATION> [NET_CONN]
+Usage: $0 <MODE> <OS_LOCATION> [NET_CONN] [EXTRA_QEMU_ARGS...]
    or: $0 nbft-setup
 
 Launches a QEMU/KVM host VM for NVMe/TCP boot testing.
@@ -21,20 +21,24 @@ Modes:
   nbft-setup
       Configure NBFT (NVMe Boot Firmware Table) in UEFI for network boot
 
-  install <local|remote> [localhost|bridged]
+  install <local|remote> [localhost|bridged] [EXTRA_QEMU_ARGS...]
       Install OS to local boot disk or remote NVMe/TCP disk
 
-  start <local|remote> [localhost|bridged]
+  start <local|remote> [localhost|bridged] [EXTRA_QEMU_ARGS...]
       Start VM from local boot disk or remote NVMe/TCP disk
 
 Network options (default: localhost):
   localhost  - User-mode networking with SSH port forwarding
   bridged    - Bridged networking on br0
 
+Additional arguments:
+  Any arguments after NET_CONN are passed directly to QEMU
+
 Examples:
-  $0 install local localhost    # Install to local disk
-  $0 install remote bridged     # Install to remote NVMe/TCP disk
-  $0 nbft-setup                 # Configure NBFT for network boot
+  $0 install local localhost                    # Install to local disk
+  $0 install remote bridged                     # Install to remote NVMe/TCP disk
+  $0 nbft-setup                                 # Configure NBFT for network boot
+  $0 start local localhost -nographic           # Start with extra QEMU args
   $0 start remote localhost     # Boot from remote NVMe/TCP disk
 EOF
     return
@@ -44,7 +48,6 @@ HOST=`hostname`
 VMNAME=`basename $PWD`
 QEMU=none
 BRIDGE_HELPER=none
-QARGS=""
 ISO_FILE=""
 
 _1OLD="$1"
@@ -82,16 +85,21 @@ case "$NET_CONN" in
         NET0_NET="-netdev user,id=net0,hostfwd=tcp::$HOST_PORT-:22"
         NET0_DEV="-device e1000,netdev=net0,addr=4"
         echo "$TARGET_PORT" > .netport
+        shift 1
     ;;
     bridged)
         NET0_NET="-netdev bridge,br=br0,id=net0,helper=$BRIDGE_HELPER"
         NET0_DEV="-device virtio-net-pci,netdev=net0,mac=$HOST_MAC1,addr=4"
+        shift 1
     ;;
     *)
         echo " Error: invalid argument $NET_CONN"
         exit 1
     ;;
 esac
+
+# Collect any extra arguments passed after the network connection parameter
+EXTRA_QEMU_ARGS="$@"
 
 # Only find ISO for 'install' mode
 if [[ "$MODE" == "install" ]]; then
@@ -148,7 +156,8 @@ $NET0_DEV \
 $NET1_NET \
 $NET1_DEV \
 $NET2_NET \
-$NET2_DEV &
+$NET2_DEV \
+$EXTRA_QEMU_ARGS &
 
 disown %1
 
