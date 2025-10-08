@@ -52,6 +52,7 @@ install: disks/boot.qcow2
 .build/rh-boot.qcow2: anaconda-ks.cfg
 	-@sudo rmdir .build 2>/dev/null
 # Look up the prebuilt ISO
+	@echo -e "\e[31mThe VM is installing in the background. Do not interrupt!\e[0m"
 	source ../vm_lib.sh && find_iso && sudo livemedia-creator \
 		--virt-uefi \
 		--make-disk --qcow2 \

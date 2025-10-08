@@ -170,4 +170,7 @@ if [[ "$MODE" == "install" ]]; then
     echo ""
     echo " Next step will be to run the \"./netsetup.sh\" script."
     echo ""
+elif [[ "$MODE" == "start" ]]; then
+    echo -e "\e[32mThe $VMNAME is running in the background.\e[0m"
+    echo ""
 fi
