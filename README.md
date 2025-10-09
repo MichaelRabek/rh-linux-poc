@@ -144,25 +144,15 @@ and prepare it for use by the `host-vm`. Use `./setup.sh edk2 -s` or `./setup.sh
 
 # Setup your Virtual Machines
 
-## The ./install.sh script
+If your hypervisor is on a remote system, you can use `make <target> QEMU_ARGS="-vnc :<number>"`
+argment and connect to the VM console with `vncviewer` on your local machine.
 
-```
- Usage: install.sh MODE BOOT_DISK [NET_CONN] [N_EXTRA_DRIVES] [QARGS]
+*Note that changing the specfic configuration - in terms of IP and MAC
+addresses, HOSTNQNs, etc. can be done by modifying the `global_vars.sh` file.*
 
- Install or start a Linux distribution on the VM with configurable networking.
-
- Arguments:
-   MODE            Operation mode: 'install' or 'start' (required)
-   BOOT_DISK       Path to the boot disk image (required)
-   NET_CONN        Network connection type: 'localhost' or 'bridged' (default: localhost)
-   N_EXTRA_DRIVES  Number of additional NVMe drives to create (default: 0)
-   QARGS           Optional extra commands for QEMU
-
-   E.g.:
-          ./install.sh install disks/boot.qcow2
-          ./install.sh start disks/boot.qcow2 localhost 0 "-vnc :0"
-          ./install.sh install disks/boot.qcow2 bridged
-```
+Also note that the scripts and `Makefile`s in the `host-vm` and `target-vm` directories are
+context sensitive. You can only run these scripts as: `./install.sh` or
+`make <target>` in the directory where they exist.
 
 ## Installing Fedora
 
@@ -216,219 +206,33 @@ run.  This script will create a VM specific *netsetup.sh* configuration script a
           ./netsetup.sh enp0s5 enp0s6 10.16.188.66
 ```
 
-## Create the host-vm
-
-You need to `cd` to the *host-vm* directory to create your host virtual machine.
-
-*Note that changing the specfic configuration - in terms of IP and MAC
-addresses, HOSTNQNs, etc. can be done by modifying the *global_vars.sh* file.*
-
-Also note that the scripts in the *host-vm* and *target-vm* directories are
-context sensative. You can only run these scripts as: `./install.sh` or
-`./start.sh` in the directory where they exist.
-
-
-### Step 1 ./install.sh the host-vm
-
-If your hypervisor is not on a remote system, you can use `./install.sh ""`.
-Otherwise pass the `-vnc :` argment and connect to the VM console with
-`vncviewer` on your local machine.
-
-E.g:
-
-```
-./install.sh fedora-36
-
- Be sure to create the root account with ssh access.
- Reboot to complete the install and login to the root account.
- Record the host interface name and ip address with "ip -br address show" command.
-
- Next step will be to the "./netsetup.sh" script.
-```
-
-Install Fedora Follow the instructions on the screen and install Fedora on your *host-vm*.
-
-After the installation reboot login to the root account on the host-vm and
-display the network configuration.
-
-For example:
-
-```
-[root@fedora ~]# ip -br addr show
-lo               UNKNOWN        127.0.0.1/8 ::1/128
-enp0s4           UP             192.168.0.216/24 2601:195:4000:62f:c84b:d6ff:fe8e:9401/64 fe80::c84b:d6ff:fe8e:9401/64
-enp0s5           UP
-enp0s6           UP
-```
-
-### Step 2 run ./netsetup.sh on the hypervisor
-
-The `./netsetup.sh` utility is run on the hypervisor in the *host-vm*
-directory.  Using the infromation from the `ip -br addr show` command on the
-`host-vm`, run the `./netsetup.sh` utility.
-
-For example:
-
-```
- > ./netsetup.sh enp0s5 enp0s6 192.168.0.216
-
- creating .build/netsetup.sh
-
- creating .build/hosts.txt
-
- scp  .build/{netsetup.sh,hosts.txt} root@192.168.0.216:
-
-Warning: Permanently added '192.168.0.216' (ECDSA) to the list of known hosts.
-root@192.168.0.216's password:
-netsetup.sh  100% 2190     5.5MB/s   00:00
-hosts.txt    100%  228   821.3KB/s   00:00
-
- Login to host-vm/root and run "./netsetup.sh" to complete the VM configuration
-```
-
-### Step 3 run ./netsetup.sh on the host-vm
-
-The newly created netsetup.sh script has been trasfered to the host-vm.  Now
-login to the root account on the host-vm and run `./netsetup.sh`.
-
-```
-[root@fedora ~]# ./netsetup.sh
-...
-Enabling a Copr repository. Please note that this repository is not part
-of the main distribution, and quality may vary.
-
-The Fedora Project does not exercise any power over the contents of
-this repository beyond the rules outlined in the Copr FAQ at
-<https://docs.pagure.org/copr.copr/user_documentation.html#what-i-can-build-in-copr>,
-and packages are not held to any quality or security level.
-
-Please do not file bug reports about these packages in Fedora
-Bugzilla. In case of problems, contact the owner of this repository.
-Repository successfully enabled.
-Copr repo for timberland-sig owned by johnmeneghini
-...
-dracut: *** Creating initramfs image file '/boot/initramfs-6.2.8-100.fc36.x86_64.img' done ***
-...
- scp the efi.tgz file to the hypervisor host,
- or use "./copy_efi.sh" to retrieve efi.tgz
-test@host-gw's password:
-efi.tgz  100% 2996KB 236.1MB/s   00:00
-
- Shutdown this VM and run the "./create_efidisk.sh" script on the hypervisor.
- Then run the "target-vm/install.sh" script to create the target-vm.
-```
-
-What happened?
-
-After configuring the virbr1 and virbr2 networks and installing all needed rpms
-the following steps are taken on the `host-vm`:
-
-```
-# Update the network configuration
-cat hosts.txt >> /etc/hosts
-
-# Update the timberland-sig rpms
-dnf copr enable -y johnmeneghini/timberland-sig
-dnf install -y nvme-cli
-dnf update -y dracut
-dnf install -y dracut-network
-
-# Build a new initramfs
-dracut -f -v --add nvmf --add-drivers nvme-tcp
-
-# Copy the updated /etc/boot/efi configuration
-cd /boot
-tar cvzf ~/efi.tgz efi
-
-# scp the efi.tgz file to the hypervisor host
-scp efi.tgz test@host-gw:/home/test/rh-linux-poc/host-vm/efi.tgz
-```
-### Step 4 run the ./create_efidisk.sh script
-
-Run the `./create_efidisk.sh` script on the hypervisor. This script basically
-creates a */boot/efi* vfat partiton in *efidisk* with the configuration from
-the `host-vm` transfered in the `efi.tgz` file.  This partition is then
-modified to include the following NBFT boot files.
-
-* eficonfig/startup.nsh    - the NVMe-oF Boot startup file, used by NvmeOfCli.efi
-* eficonfig/config         - the NVMe-oF Boot NBFT Attempt Configuration
-* eficonfig/NvmeOfCli.efi  - the edk2 build artifact
-
-The *efidisk* vfat partion is then used by qemu in the `.build/start.sh` script
-with the paramter `-drive file=efidisk,format=raw,if=none,id=NVME1`.
-
-The `./create_efidisk.sh` script does the following:
-
-```
-sudo losetup -D loop1
-sudo losetup -P loop1 efidisk
-sudo mkfs.vfat /dev/loop1p1
-sudo losetup -D loop1
-mkdir -p efi
-sudo mount -t vfat -o loop,offset=1048576 efidisk efi
-sudo tar xzvf efi.tgz
-sudo cp -v eficonfig/* efi/EFI/BOOT
-sudo umount efi
-```
-
-Example:
-
-```
-> ./create_efidisk.sh
-'eficonfig/config.in' -> 'eficonfig/config'
-'efidisk.in' -> 'efidisk'
-[sudo] password for jmeneghi:
-mkfs.fat 4.1 (2017-01-24)
-efi/
-efi/EFI/
-efi/EFI/BOOT/
-efi/EFI/BOOT/fbx64.efi
-efi/EFI/BOOT/BOOTX64.EFI
-efi/EFI/fedora/
-efi/EFI/fedora/mmx64.efi
-efi/EFI/fedora/shim.efi
-efi/EFI/fedora/shimx64.efi
-efi/EFI/fedora/grubx64.efi
-efi/EFI/fedora/grub.cfg
-efi/EFI/fedora/grub.cfg.rpmsave
-efi/EFI/fedora/BOOTX64.CSV
-'/home/jmeneghi/data/rh-linux-poc/host-vm/eficonfig/config' -> '/home/jmeneghi/data/rh-linux-poc/host-vm/efi/EFI/BOOT/config'
-'/home/jmeneghi/data/rh-linux-poc/host-vm/eficonfig/startup.nsh' -> '/home/jmeneghi/data/rh-linux-poc/host-vm/efi/EFI/BOOT/startup.nsh'
-'/home/jmeneghi/data/rh-linux-poc/host-vm/eficonfig/NvmeOfCli.efi' -> '/home/jmeneghi/data/rh-linux-poc/host-vm/efi/EFI/BOOT/NvmeOfCli.efi'
-'/home/jmeneghi/data/rh-linux-poc/host-vm/eficonfig/VConfig.efi' -> '/home/jmeneghi/data/rh-linux-poc/host-vm/efi/EFI/BOOT/VConfig.efi'
-
- Next step is to install and configure the target-vm
- with "cd ../target-vm; ./install.sh"
-```
-To modify the NBFT Attempt Configuration simply edit the *eficonfig/config.in* config file.
-
-### Step 5 shutdown the host-vm
-
-This is a very important step. Before installing and confuring the `target-vm`
-you must shutdown the `host-vm`.  After the `target-vm` is installed and
-configured you will return to the *host-vm* directory and start the NBFT boot
-process by running the *host-vm/start.sh* script.
-
-## Create the target-vm
+## Create the `target-vm`
 
 You must `cd ../target-vm` to run the scripts needed to start the `target-vm`.
 
-### Step 1 install the target-vm
+### Step 1 Install the target-vm
 
 #### Method 1 Automated installation (Red Hat family distributions)
 
 If the OS on your downloaded ISO belongs to the Red Hat family, you can install the target VM automatically.
-Run `make help` to see all available options, then:
+Run `make help` to see all available options, then run:
 
-- Run `make rh-start` to start the VM with the pre-installed disk
+```
+make rh-start
+```
+to start the VM with the pre-installed disk
 
 **Note**: The automated installation uses the anaconda kickstart configuration produced from in `anaconda-ks.cfg.template`.
 You will be asked to provide a `root` password for the `target-vm` at the beginning of the setup.
 If you are not running this as root, you will also be asked for **your** `sudo` afterwards. Do not confuse these!
 
+If you are running this on a remote machine, the QEMU console window will not appear while the `target-vm` is auto-installing.
+The terminal will be blocked as if it was hanging, but **it is not**. The OS is being installed in the background.
+Both a success and a failure will terminate the command, so **DO NOT TERMINATE** it yourself nor interrupt it (with `Ctrl+C` for example)!!!
+
 #### Method 2 Manual installation
 
-For any distribution or if you prefer manual installation:
+For any other distribution or if you prefer manual installation:
 
 - Run `make install` to start manual installation from ISO
 - Connect to the VM console and complete the OS installation
@@ -437,7 +241,7 @@ For any distribution or if you prefer manual installation:
 
 Run `make help` to see all available targets and configuration options.
 
-### Step 2 login to the target-vm
+### Step 2 Login to the target-vm
 
 Login to the root account on the target-vm and display the network configuration.
 
@@ -451,7 +255,7 @@ enp0s5           UP             fe80::6944:6969:83d:aef1/64
 enp0s6           UP             fe80::6e22:d7dd:43f0:5e21/64
 ```
 
-### Step 3 run ./netsetup.sh on the hypervisor
+### Step 3 Run ./netsetup.sh on the hypervisor
 
 The `./netsetup.sh` utility is run on the hypervisor in the *target-vm*
 directory.  Using the infromation from the `ip -br addr show` command on the
@@ -477,7 +281,7 @@ tcp.json            100% 2031    10.3MB/s   00:00
  Login to target-vm/root and run "./netsetup.sh" to complete the VM configuration
 ```
 
-### Step 4 run ./netsetup.sh on the target-vm
+### Step 4 Run ./netsetup.sh on the target-vm
 
 For example:
 
@@ -500,7 +304,7 @@ of the main distribution, and quality may vary.
  Then run "host-vm/start.sh" on the hypervisor to boot the host-vm with NVMe/TCP
 ```
 
-### Step 5 run start-tcp-target.sh on the target-vm
+### Step 5 Run start-tcp-target.sh on the target-vm
 
 The following step configures and runs the NVMe/TCP softarget on the
 `target-vm`.  Following this step the `target-vm` is now serving the
@@ -516,49 +320,65 @@ Example:
 Redirecting to /bin/systemctl stop firewalld.service
 ```
 
-## Start the host-vm
+## Create the `host-vm`
 
-Now `cd ../host-vm` and run the `./start.sh attempt` script to start the host-vm and
-begin the NVMe/TCP NBFT boot process.
+You need to `cd` to the `host-vm` directory to create your host virtual machine.
 
-E.g.:
+### Step 0 Set up NBFT variables
 
+This step only has to be done
+1. if you have freshly cloned this repository (a fresh setup),
+2. if the `vm_vars.fd` gets deleted, or
+3. after running `make clean-config` or `make reconfig` since you may have changed the attempt configuration.
+
+You need to program the NBFT which is programmed by boot variables held in the `vm_vars.fd` file.
+This file is initialized by using the *attempt* arguments.
+
+First run:
 ```
-> ./start.sh
- Usage: ./start.sh <attempt|remote|local>
-
- Starts the QEMU VM named host-vm
-
-    attempt - inialize vm_vars.fd and boot with efidisk and nvme/tcp - target-vm must be running
-    remote  - do not initialized vm_vars.fd and boot with efidisk and nvme/tcp - target-vm must be running
-    local -  boot with out the efidisk and mount the remote disk locally - target-vm must be shutdown
-
-   E.g.:
-          ./start.sh attempt
-          ./start.sh remote
-          ./start.sh local
+make setup
 ```
+The setup will show a few prompts with which you can customize the boot attempt configuration.
+```
+Enable multipath? (y/n):
+```
+Respond `y` to enable to test with multipath network connection for redundancy.
+```
+Use discovery NQN? (y/n):
+```
+Respond `y` to enable discovery NQN.
 
-The first time the host-vm is started you need to program the nbft which is programmed by boot variables held in the `vm_vars.fd` file.  This file is initialized by using the *attempt* arguments.
+This setup creates a `/boot/efi` `vfat` partiton in the `efidisk`.
+This partition is then modified to include the following NBFT boot files.
+
+* `eficonfig/startup.nsh`    - the NVMe-oF Boot startup file, used by NvmeOfCli.efi
+* `eficonfig/config`         - the NVMe-oF Boot NBFT Attempt Configuration
+* `eficonfig/NvmeOfCli.efi`  - the edk2 build artifact
+
+This `efidisk` is used in this QEMU parameter:
+```
+-drive file=efidisk,format=raw,if=none,id=NVME1 -device nvme,drive=NVME1,serial=$SN3
+```
+to program the NBFT in the EFI shell, as you will see below.
 
 Once you connect to the `host-vm` console, you will observe the UEFI boot
-process starting.  Immediately Press the ESC button to enter the UEFI setup
+process starting.  Immediately press the `ESC` button repeatedly to enter the UEFI setup
 menu.
 
 ![alt uefi boot menu](images/uefi_boot_menu.png)
 
-Select the Boot Manager.
+Select the `Boot Manager`.
 
 ![alt uefi boot menu](images/uefi_boot_manager.png)
 
-Select the EFI Internal Shell and hit `Enter`.
+Select the `EFI Internal Shell` and hit `Enter`.
 
 ![alt uefi boot select uefi](images/uefi_boot_select.png)
 
-The EFI Internal Shell will run and `NvmeOfCli setattempt Config` will run.
-Allow the coutdown to expire so that `startup.nsh` runs.  This only needs to be
-done once. This will program your NBFT/ACPI table with the information
-programmed in the *host-vm/eficonfig/config* attempt file.
+The `EFI Internal Shell` will run and `NvmeOfCli setattempt Config` will run.
+Allow the coutdown to expire so that `startup.nsh` runs.
+This will program your NBFT/ACPI table with the information
+programmed in the `host-vm/eficonfig/config` attempt file.
 
 ![alt uefi count down](images/uefi_count_down.png)
 
@@ -567,58 +387,138 @@ return to the Boot Manager menu. Press ESC and select `Reset` to continue.
 
 ![alt uefi reset](images/uefi_reset.png)
 
-The EFI firmware will reset the system an boot from NVMe/TCP.
+The EFI firmware will reset and NVMe/TCP will now be possible.
 
-![alt uefi reset](images/uefi_tcp_boot.png)
+In case of a first-time setup you may now continue directly to step 1 (install) since a GRUB menu should appear now.  
+Otherwise shut the VM down and continue to "*To restart the host-vm after shutdown -h*".
 
-## To Restart the host-vm
+### Step 1 Install an OS for the host-vm
 
-**To restart the host-vm after shutdown -h**
+If you do not yet have the `host-vm` running, run:
+```
+make install-remote
+```
 
-Subsequent to booting the *host-vm* for the first time the NBFT/ACPI table
+![alt uefi reset](images/uefi_iso_install.png)
+
+Hit `Enter`.
+
+Follow the instructions on the screen and install your OS (not necessarily Fedora) on your *host-vm*.
+
+If everything worked correctly, you should see the remote NVMe drive in
+the drive selection menu of the installer. Example from the
+installation of Fedora:
+
+![alt Anaconda NBFT drive](images/anaconda_nbft_drive.png)
+
+After the installation reboot, login to the root account on the `host-vm` and
+display the network configuration.
+
+For example:
+
+```
+[root@fedora ~]# ip -br addr show
+lo               UNKNOWN        127.0.0.1/8 ::1/128
+enp0s4           UP             192.168.0.216/24 2601:195:4000:62f:c84b:d6ff:fe8e:9401/64 fe80::c84b:d6ff:fe8e:9401/64
+enp0s5           UP
+enp0s6           UP
+```
+
+### Step 2 Run ./netsetup.sh on the hypervisor
+
+The `./netsetup.sh` utility is run on the hypervisor in the `host-vm`
+directory **while the `host-vm` is running**. Using the infromation from the
+`ip -br addr show` command on the `host-vm`, run the `./netsetup.sh` utility.
+
+For example:
+
+```
+ $ ./netsetup.sh enp0s5 enp0s6 localhost
+
+DIR = /home/mrabek/rh-linux-poc/host-vm
+ 
+ creating .build/netsetup.sh
+ 
+ creating .build/hosts.txt
+
+Use "ssh -p 5556 root@localhost" to login to the host-vm
+
+
+ scp -P 5555 .build/{netsetup.sh,hosts.txt} root@localhost:
+
+# Host [localhost]:5555 found: line 8
+/home/mrabek/.ssh/known_hosts updated.
+Original contents retained as /home/mrabek/.ssh/known_hosts.old
+Warning: Permanently added '[localhost]:5555' (ED25519) to the list of known hosts.
+root@localhost's password: 
+netsetup.sh                                                                                                                                                           100% 1953     1.5MB/s   00:00    
+hosts.txt                                                                                                                                                             100%  176   592.4KB/s   00:00    
+
+ Login to host-vm/root and run "./netsetup.sh" to complete the VM configuration.
+ Then shutdown the host-vm and run the "./create_efidisk.sh" command.
+ You must run "./start.sh attempt" to program the efi boot attempts before you can boot remotely.
+```
+
+### Step 3 Run `./netsetup.sh` on the `host-vm`
+
+The newly created netsetup.sh script has been trasfered to the host-vm.  Now
+login to the root account on the host-vm and run `./netsetup.sh`.
+
+```
+[root@fedora ~]# ./netsetup.sh
+...
+Connection 'enp0s5' (57afa4d4-be6e-3731-a793-b257afc325cb) successfully deleted.
+Connection 'enp0s5' (dfcb0891-1d25-429c-9fc8-7dd3973abc36) successfully added.
+Connection successfully activated (D-Bus active path: /org/freedesktop/NetworkManager/ActiveConnection/6)
+Connection 'enp0s6' (7a476fc8-8f8b-3d1f-88c6-d78d2226581e) successfully deleted.
+Connection 'enp0s6' (1e546b1b-5ae2-49fa-9f87-00376e6411ce) successfully added.
+Connection successfully activated (D-Bus active path: /org/freedesktop/NetworkManager/ActiveConnection/8)
+lo               UNKNOWN        127.0.0.1/8 ::1/128 
+enp0s5           UP             192.168.101.30/24 fe80::8452:4c1b:af10:f7cc/64 
+enp0s6           UP             192.168.110.30/24 fe80::7bb9:d0f1:daf1:d4a7/64 
+enp0s4           UP             10.0.2.15/24 fec0::5054:ff:fe12:3456/64 fe80::5054:ff:fe12:3456/64 
+
+enter user account name [none] : 
+Updating and loading repositories:
+Repositories loaded.
+Package "nvme-cli-2.12-1.fc42.x86_64" is already installed.
+Package "libnvme-1.12-1.fc42.x86_64" is already installed.
+
+Nothing to do.
+
+ The setup is finished now. Enjoy using your test environment!
+```
+
+## Using the `host-vm`
+
+### Modifying boot attempts
+
+To modify the NBFT attempt configuration simply edit the `host-vm/eficonfig/config` config file **or** run
+```
+make reconfig
+```
+to recreate the configuration *anew* interractively.
+
+### Start the `host-vm` without NVMe/TCP
+
+Simply run `make start-local` to boot from a local boot drive (that has to be manually installed with `make install-local`). For the installation simply 
+follow the instructions.
+
+### To restart the `host-vm` after `shutdown -h`
+
+For subsequent booting of the `host-vm` the NBFT/ACPI table
 should not need to be programmed by running `startup.nsh` again. To boot the
-*host-vm* after shutdown run the `./start.sh remote` script. Connect to the
-*host-vm* console and immediately press the ESC button to stop the
-`startup.nsh` countdown. If needed, type `reset -w` at the *Shell>* prompt to
-do a warm restart.  The host-vm should immediately find the remote disk and
-boot with nvme/tcp.
-
-![alt uefi reset](images/uefi_no_attempt.png)
-
-Then Enter `Reset` at the UEFI setup menu to boot the VM. The UEFI will connect
-to the NVMe/TCP target and boot.
-
-![alt uefi reset](images/uefi_reset.png)
-
-## To Reprogram or update the efidisk on the host-vm
-
-Now that you have both the *host-vm* and the *target-vm* running you can update the *nvme-cli*, *libnvme* and *dracut* components with the following work flow.
-
-1. Modify the source code in the git submodules found in *libnvme_rpm/libnvme*, *nvme_rpm/nvme-cli*, or *dracut_rpm/dracut*.
-2. After compiling your changes locally generate new *copr* rpms with the `./setup.sh copr` command.
-
-Then update your running QEMU testbed with the new new *rpms* with the following prodedure.
-
-1. shutdown the host-vm
-2. shutdown the target-vm
-3. start the host-vm with `host-vm/start.sh local`
-4. login to the vm and run the `./update_efi.sh` script.
-5. run the `host-vm/copy_efi.sh` script, if needed.
-6. shutdown the host-vm
-6. start the target-vm with the `target-vm/start.sh` script
-6. start the nvme target on the target-vm with the `./start-nvme-target.sh` script
-7. create a new *efidisk* by running the `host-vm/create_efidisk.sh` script
-8. boot the host-vm with the `host-vm/start.sh attempt` script
-
-This procedure can be used to develop and test your changes to *nvme-cli* and *dracut* in support of NVMe/TCP boot.
+`host-vm` after shutdown run `make start-remote`. Connect to the
+`host-vm` console and immediately press the ESC button to stop the countdown.
+In case of boot issues (e.g. the remote drive not showing in the Boot manager),
+type `reset -w` in the `Shell>` prompt to
+do a warm restart. The firmware variables will be reloaded and the `host-vm` should immediately find the remote disk and boot with NVMe/TCP.
 
 # For developers
 
-
-
 ## Build all Timberland-sig artifacts
 
-Run `./setup.sh -m build fedora-37` - This script clones all of the timberland-sig
+Run `./setup.sh devel` - This script clones all of the timberland-sig
 repositories, builds all needed artifiacts and rpms, and installs them in your
 personal copr repo. It then to creates a bootable iso image with the
 [lorax](https://weldr.io/lorax/lorax.html) uility. Artifacts and rpms are
@@ -640,9 +540,9 @@ created in the follow directories:
 Now run the following commands to build and install your NVMe/TCP Boot test environment:
 
 ```
-  ./setup.sh -m build fedora-37  # this will build all needed rpms and artifacts and create a fedora-37 bootable iso
+  ./setup_extra.sh -m build fedora-37  # this will build all needed rpms and artifacts and create a fedora-37 bootable iso
 ```
 
-The next step is to go to [Setup your Virtual Machines](#setup-your-virtual-machines) and install the *host-vm*.
+The next step is to go to [Setup your Virtual Machines](#setup-your-virtual-machines) and install the `host-vm`.
 
 **END**
