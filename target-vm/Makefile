@@ -6,6 +6,8 @@ EXTRA_DRIVES ?= 0
 NET_TYPE ?= "localhost"
 QEMU_ARGS ?= ""
 
+SETUP_SCRIPT := vm.sh
+
 help:
 	@echo "Target VM Makefile - Build and manage virtual machines"
 	@echo ""
@@ -36,18 +38,18 @@ help:
 	@echo "  make NET_TYPE=bridged start     # Start with bridged networking"
 	@echo ""
 
-rh-start: disks/nvme1.qcow2 install.sh
+rh-start: disks/nvme1.qcow2 $(SETUP_SCRIPT)
 # disks/rh-boot.qcow2 is not an explicit dependency because it consumes
 # .build/rh-boot.qcow2 for its creation. This, however, confuses GNU Make
 # to go rebuild the qcow2 disk unnecessarily.
 	[ -f disks/rh-boot.qcow2 ] || make disks/rh-boot.qcow2
-	@bash ./install.sh start disks/rh-boot.qcow2 $(NET_TYPE) $(EXTRA_DRIVES) $(QEMU_ARGS)
+	@bash ./$(SETUP_SCRIPT) start disks/rh-boot.qcow2 $(NET_TYPE) $(EXTRA_DRIVES) $(QEMU_ARGS)
 
-start: disks/boot.qcow2 disks/nvme1.qcow2 install.sh
-	@bash ./install.sh start $< $(NET_TYPE) $(EXTRA_DRIVES) $(QEMU_ARGS)
+start: disks/boot.qcow2 disks/nvme1.qcow2 $(SETUP_SCRIPT)
+	@bash ./$(SETUP_SCRIPT) start $< $(NET_TYPE) $(EXTRA_DRIVES) $(QEMU_ARGS)
 
 install: disks/boot.qcow2
-	@bash ./install.sh install $< $(NET_TYPE) $(EXTRA_DRIVES) $(QEMU_ARGS)
+	@bash ./$(SETUP_SCRIPT) install $< $(NET_TYPE) $(EXTRA_DRIVES) $(QEMU_ARGS)
 
 .build/rh-boot.qcow2: anaconda-ks.cfg
 	-@sudo rmdir .build 2>/dev/null

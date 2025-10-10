@@ -5,6 +5,8 @@ DRIVE_CAP ?= 70G
 NET_TYPE ?= "localhost"
 QEMU_ARGS ?= ""
 
+SETUP_SCRIPT := vm.sh
+
 help:
 	@echo "Host VM Makefile - Manage NVMe/TCP boot test host VM"
 	@echo ""
@@ -40,19 +42,19 @@ help:
 	@echo ""
 
 setup: efidisk
-	@bash ./install.sh nbft-setup $(NET_TYPE) $(QEMU_ARGS)
+	@bash ./$(SETUP_SCRIPT) nbft-setup $(NET_TYPE) $(QEMU_ARGS)
 
-start-local: disks/boot.qcow2 install.sh
-	@bash ./install.sh start local $(NET_TYPE) $(QEMU_ARGS)
+start-local: disks/boot.qcow2 $(SETUP_SCRIPT)
+	@bash ./$(SETUP_SCRIPT) start local $(NET_TYPE) $(QEMU_ARGS)
 
 install-local: disks/boot.qcow2
-	@bash ./install.sh install local $(NET_TYPE) $(QEMU_ARGS)
+	@bash ./$(SETUP_SCRIPT) install local $(NET_TYPE) $(QEMU_ARGS)
 
 install-remote:
-	@bash ./install.sh install remote $(NET_TYPE) $(QEMU_ARGS)
+	@bash ./$(SETUP_SCRIPT) install remote $(NET_TYPE) $(QEMU_ARGS)
 
 start-remote:
-	@bash ./install.sh start remote $(NET_TYPE) $(QEMU_ARGS)
+	@bash ./$(SETUP_SCRIPT) start remote $(NET_TYPE) $(QEMU_ARGS)
 
 disks/%.qcow2:
 	mkdir -p disks
