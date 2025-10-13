@@ -55,14 +55,15 @@ It will essentially run the following commands to download and install the *preb
                   # ↳ the quickstart only runs this if no ISO was downloaded in this clone of the repository
 ```
 
-The next step is to go to [Setup your Virtual Machines](#setup-your-virtual-machines) and install the *host-vm*
+In case of problems consult the [Set up your Hypervisor](#set-up-your-hypervisor) section below.
+The next step is to go to [Setup your Virtual Machines](#setup-your-virtual-machines) and install the `host-vm`.
 
 # How it works:
 
 We create two Virtual Machines connected with two virtual networks.  The first
-is a nvme/tcp soft target (*target-vm*), the second is a nvme/tcp host
-(*host-vm*).  On the *host-vm* we will execute the UEFI firmware with QEMU. The
-firmware will connect to the nvme1n1 device on the remote *target-vm* with nvme/tcp,
+is a NVMe/TCP soft target (`target-vm`), the second is a NVMe/TCP host
+(`host-vm`).  On the `host-vm` we will execute the UEFI firmware with QEMU. The
+firmware will connect to the nvme1n1 device on the remote `target-vm` with NVMe/TCP,
 load the kernel, take over the boot process by using the information provided by the UEFI
 firmware via the NBFT table.
 
@@ -151,12 +152,12 @@ argment and connect to the VM console with `vncviewer` on your local machine.
 addresses, HOSTNQNs, etc. can be done by modifying the `global_vars.sh` file.*
 
 Also note that the scripts and `Makefile`s in the `host-vm` and `target-vm` directories are
-context sensitive. You can only run these scripts as: `./install.sh` or
+context sensitive. You can only run these scripts as: `./vm.sh` or
 `make <target>` in the directory where they exist.
 
 ## Installing Fedora
 
-Each QEMU VM (*host-vm* and *target-vm*) will need to be installed as a part of
+Each QEMU VM (`host-vm` and `target-vm`) will need to be installed as a part of
 the test bed setup.  During the installation process you can use all of the
 defaults for installation.  The only change in defaults needs be: *be sure to
 create a root account with ssh access*.
@@ -175,7 +176,7 @@ create a root account with ssh access*.
 
 After the VM reboots login to the *root* account to be sure everything is
 working. The VM should now be reachable through `enp0s4` which is the DHCP
-controlled management network on the hypervisor's *br0* bridged network;
+controlled management network on the hypervisor's `br0` bridged network;
 `enp0s5` and `enp0s6` are statically configured and unconnected. Use the `ip
 -br addr show` and `nmcli dev status` commands to see if the networks are there
 and correctly working.
@@ -183,7 +184,7 @@ and correctly working.
 ## The ./netsetup.sh script
 
 During the installation of both VMs the `./netsetup.sh` script will be
-run.  This script will create a VM specific *netsetup.sh* configuration script and
+run.  This script will create a VM specific `netsetup.sh` configuration script and
 `scp` it to the newly installed VM.  It is important to specify the `ifname` and
 `ipaddr` parameters correctly.
 
@@ -208,9 +209,9 @@ run.  This script will create a VM specific *netsetup.sh* configuration script a
 
 ## Create the `target-vm`
 
-You must `cd ../target-vm` to run the scripts needed to start the `target-vm`.
+You must `cd ./target-vm` to run the scripts needed to start the `target-vm`.
 
-### Step 1 Install the target-vm
+### Step 1 Install the `target-vm`
 
 #### Method 1 Automated installation (Red Hat family distributions)
 
@@ -234,16 +235,16 @@ Both a success and a failure will terminate the command, so **DO NOT TERMINATE**
 
 For any other distribution or if you prefer manual installation:
 
-- Run `make install` to start manual installation from ISO
+- Run `make install` to start a manual installation from an ISO
 - Connect to the VM console and complete the OS installation
 - **Important**: Create a root account with SSH access during installation
 - After installation, reboot and run `make start` to start the VM
 
 Run `make help` to see all available targets and configuration options.
 
-### Step 2 Login to the target-vm
+### Step 2 Login to the `target-vm`
 
-Login to the root account on the target-vm and display the network configuration.
+Login to the root account on the `target-vm` and display the network configuration.
 
 For example:
 
@@ -255,9 +256,9 @@ enp0s5           UP             fe80::6944:6969:83d:aef1/64
 enp0s6           UP             fe80::6e22:d7dd:43f0:5e21/64
 ```
 
-### Step 3 Run ./netsetup.sh on the hypervisor
+### Step 3 Run `./netsetup.sh` on the hypervisor
 
-The `./netsetup.sh` utility is run on the hypervisor in the *target-vm*
+The `./netsetup.sh` utility is ran on the hypervisor in the `target-vm`
 directory.  Using the infromation from the `ip -br addr show` command on the
 `target-vm`, run the `./netsetup.sh` utility.
 
@@ -281,7 +282,7 @@ tcp.json            100% 2031    10.3MB/s   00:00
  Login to target-vm/root and run "./netsetup.sh" to complete the VM configuration
 ```
 
-### Step 4 Run ./netsetup.sh on the target-vm
+### Step 4 Run `./netsetup.sh` on the `target-vm`
 
 For example:
 
@@ -304,7 +305,7 @@ of the main distribution, and quality may vary.
  Then run "host-vm/start.sh" on the hypervisor to boot the host-vm with NVMe/TCP
 ```
 
-### Step 5 Run start-tcp-target.sh on the target-vm
+### Step 5 Run `start-tcp-target.sh` on the `target-vm`
 
 The following step configures and runs the NVMe/TCP softarget on the
 `target-vm`.  Following this step the `target-vm` is now serving the
@@ -344,9 +345,20 @@ Enable multipath? (y/n):
 ```
 Respond `y` to enable to test with multipath network connection for redundancy.
 ```
+Connection timeout (default: 3000):
+```
+Hit `Enter` to keep the default value of `3000` or enter a custom value and hit `Enter`.
+```
 Use discovery NQN? (y/n):
 ```
 Respond `y` to enable discovery NQN.
+```
+1 -> Set NID to NSUUID=...
+2 -> Set NID to NSNGUID=...
+n -> Do not set NID.
+Set NID? (1/2/n):
+```
+Respond `1` or `2` to set an NID.
 
 This setup creates a `/boot/efi` `vfat` partiton in the `efidisk`.
 This partition is then modified to include the following NBFT boot files.
@@ -389,10 +401,10 @@ return to the Boot Manager menu. Press ESC and select `Reset` to continue.
 
 The EFI firmware will reset and NVMe/TCP will now be possible.
 
-In case of a first-time setup you may now continue directly to step 1 (install) since a GRUB menu should appear now.  
-Otherwise shut the VM down and continue to "*To restart the host-vm after shutdown -h*".
+In case of a first-time setup you may now continue directly to step 1 (install) since a GRUB menu should appear now.
+Otherwise shut the VM down and continue to [To restart the host-vm after `shutdown -h`](#to-restart-the-host-vm-after-shutdown--h).
 
-### Step 1 Install an OS for the host-vm
+### Step 1 Install an OS for the `host-vm`
 
 If you do not yet have the `host-vm` running, run:
 ```
@@ -403,18 +415,18 @@ make install-remote
 
 Hit `Enter`.
 
-Follow the instructions on the screen and install your OS (not necessarily Fedora) on your *host-vm*.
+Follow the instructions on the screen and install your OS (not necessarily Fedora) on your `host-vm`.
 
 If everything worked correctly, you should see the remote NVMe drive in
-the drive selection menu of the installer. Example from the
-installation of Fedora:
+the drive selection menu of the installer.
+Example from the installation of Fedora:
 
 ![alt Anaconda NBFT drive](images/anaconda_nbft_drive.png)
 
-After the installation reboot, login to the root account on the `host-vm` and
-display the network configuration.
+If you do not see it, it may be hidden in the `Add disk` submenu.
 
-For example:
+After the installation reboot, login to the root account on the `host-vm` and
+display the network configuration. For example:
 
 ```
 [root@fedora ~]# ip -br addr show
@@ -424,7 +436,7 @@ enp0s5           UP
 enp0s6           UP
 ```
 
-### Step 2 Run ./netsetup.sh on the hypervisor
+### Step 2 Run `./netsetup.sh` on the hypervisor
 
 The `./netsetup.sh` utility is run on the hypervisor in the `host-vm`
 directory **while the `host-vm` is running**. Using the infromation from the
@@ -436,9 +448,9 @@ For example:
  $ ./netsetup.sh enp0s5 enp0s6 localhost
 
 DIR = /home/mrabek/rh-linux-poc/host-vm
- 
+
  creating .build/netsetup.sh
- 
+
  creating .build/hosts.txt
 
 Use "ssh -p 5556 root@localhost" to login to the host-vm
@@ -450,9 +462,9 @@ Use "ssh -p 5556 root@localhost" to login to the host-vm
 /home/mrabek/.ssh/known_hosts updated.
 Original contents retained as /home/mrabek/.ssh/known_hosts.old
 Warning: Permanently added '[localhost]:5555' (ED25519) to the list of known hosts.
-root@localhost's password: 
-netsetup.sh                                                                                                                                                           100% 1953     1.5MB/s   00:00    
-hosts.txt                                                                                                                                                             100%  176   592.4KB/s   00:00    
+root@localhost's password:
+netsetup.sh                                                                                                                                                           100% 1953     1.5MB/s   00:00
+hosts.txt                                                                                                                                                             100%  176   592.4KB/s   00:00
 
  Login to host-vm/root and run "./netsetup.sh" to complete the VM configuration.
  Then shutdown the host-vm and run the "./create_efidisk.sh" command.
@@ -461,7 +473,7 @@ hosts.txt                                                                       
 
 ### Step 3 Run `./netsetup.sh` on the `host-vm`
 
-The newly created netsetup.sh script has been trasfered to the host-vm.  Now
+The newly created `netsetup.sh` script has been trasfered to the `host-vm`. Now
 login to the root account on the host-vm and run `./netsetup.sh`.
 
 ```
@@ -473,12 +485,12 @@ Connection successfully activated (D-Bus active path: /org/freedesktop/NetworkMa
 Connection 'enp0s6' (7a476fc8-8f8b-3d1f-88c6-d78d2226581e) successfully deleted.
 Connection 'enp0s6' (1e546b1b-5ae2-49fa-9f87-00376e6411ce) successfully added.
 Connection successfully activated (D-Bus active path: /org/freedesktop/NetworkManager/ActiveConnection/8)
-lo               UNKNOWN        127.0.0.1/8 ::1/128 
-enp0s5           UP             192.168.101.30/24 fe80::8452:4c1b:af10:f7cc/64 
-enp0s6           UP             192.168.110.30/24 fe80::7bb9:d0f1:daf1:d4a7/64 
-enp0s4           UP             10.0.2.15/24 fec0::5054:ff:fe12:3456/64 fe80::5054:ff:fe12:3456/64 
+lo               UNKNOWN        127.0.0.1/8 ::1/128
+enp0s5           UP             192.168.101.30/24 fe80::8452:4c1b:af10:f7cc/64
+enp0s6           UP             192.168.110.30/24 fe80::7bb9:d0f1:daf1:d4a7/64
+enp0s4           UP             10.0.2.15/24 fec0::5054:ff:fe12:3456/64 fe80::5054:ff:fe12:3456/64
 
-enter user account name [none] : 
+enter user account name [none] :
 Updating and loading repositories:
 Repositories loaded.
 Package "nvme-cli-2.12-1.fc42.x86_64" is already installed.
@@ -501,7 +513,7 @@ to recreate the configuration *anew* interractively.
 
 ### Start the `host-vm` without NVMe/TCP
 
-Simply run `make start-local` to boot from a local boot drive (that has to be manually installed with `make install-local`). For the installation simply 
+Simply run `make start-local` to boot from a local boot drive (that has to be manually installed with `make install-local`). For the installation simply
 follow the instructions.
 
 ### To restart the `host-vm` after `shutdown -h`
@@ -527,7 +539,7 @@ created in the follow directories:
 | Directory  | Decription |
 | :-----   | :----      |
 |`edk2`    | Contains the timberland-sig edk2 repository. The built artifacts are contained in: *edk2/edk2/Build/OvmfX64/DEBUG_GCC5/X64*.  The spefic artifacts need to boot with nvme/tcp are moved to: *host-vm/eficonfig/NvmeOfCli.efi*, *host-vm/OVMF_CODE.fd* and *host-vm/vm_vars.fd*. |
-| `lorax_results` | contains the bootable iso generated from the build process. This iso is created using the generated rpm from your `copr.fedorainfracloud.org` project. The specific location of the iso is: *lorax_results/images/boot.iso*`.  This is the default iso used by the *host-vm\install.sh* and *target-vm\install.sh* scripts.|
+| `lorax_results` | contains the bootable iso generated from the build process. This iso is created using the generated rpm from your `copr.fedorainfracloud.org` project. The specific location of the iso is: *lorax_results/images/boot.iso*`.  This is the default iso used by the *host-vm\vm.sh* and *target-vm\vm.sh* scripts.|
 | `copr.fedorainfracloud.org` | Contains rpms for nvme-cli, libnvme and dracut. (e.g.: see [johnmeneghini's](https://copr.fedorainfracloud.org/coprs/johnmeneghini/timberland-sig/) copr repository. |
 
 ## Developer Build
