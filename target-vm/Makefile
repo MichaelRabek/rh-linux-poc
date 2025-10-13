@@ -45,6 +45,11 @@ rh-start: disks/nvme1.qcow2 $(SETUP_SCRIPT)
 	[ -f disks/rh-boot.qcow2 ] || make disks/rh-boot.qcow2
 	@bash ./$(SETUP_SCRIPT) start disks/rh-boot.qcow2 $(NET_TYPE) $(EXTRA_DRIVES) $(QEMU_ARGS)
 
+	@echo "Record the host interface name and ip address with \"ip -br address show\" command."
+	@echo ""
+	@echo "If your $(VMNAME) is freshly installed, the next step will be to run the \"./netsetup.sh\" script."
+	@echo ""
+
 start: disks/boot.qcow2 disks/nvme1.qcow2 $(SETUP_SCRIPT)
 	@bash ./$(SETUP_SCRIPT) start $< $(NET_TYPE) $(EXTRA_DRIVES) $(QEMU_ARGS)
 
