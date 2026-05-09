@@ -149,8 +149,17 @@ install_virt() {
         sudo dnf install -y qemu-kvm qemu-img
     fi
     echo "allow all" > /tmp/bridge.conf
-    sudo cp /tmp/bridge.conf /etc/qemu/bridge.conf
+    if [ -d /etc/qemu ] ; then
+        local qemu_conf_dir='/etc/qemu'
+    elif [ -d /etc/qemu-kvm ] ; then
+        local qemu_conf_dir='/etc/qemu-kvm'
+    else
+        echo "/etc/qemu" not found! >&2
+	exit 1
+    fi
+    sudo cp -b /tmp/bridge.conf $qemu_conf_dir/bridge.conf
     sudo chmod 4755 /usr/libexec/qemu-bridge-helper
+    echo " : QEMU is set up!"
 }
 
 install_edk2() {
