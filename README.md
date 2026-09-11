@@ -837,4 +837,53 @@ Alternatively, you can use the following build all of rpms locally.
   ./setup_extra.sh mock fedora-44  # this will build all needed rpms and artifacts and create a fedora-37 bootable iso
 ```
 
+## Building Custom RPMs and Modifying ISOs
+
+The `redhat/rpms/build.sh` script builds RPM packages with mock and replaces them in ISO images. Useful for testing custom nvme-cli builds before publishing to Copr.
+
+### Quick Start
+
+```bash
+cd redhat/rpms
+
+# Build RPM from upstream sources and replace in ISO (complete workflow)
+./build.sh \
+  -e fedora-44-x86_64 \
+  -s nvme-cli.spec \
+  -p nvme-cli \
+  -i /path/to/original.iso
+
+# Output: build/results/nvme-cli/*.rpm
+#         build/iso-output/*-modified.iso
+```
+
+### Commands
+
+```bash
+# Complete workflow (default - build and replace)
+./build.sh -e fedora-44-x86_64 -s nvme-cli.spec -p nvme-cli -i /path/to/original.iso
+
+# Build only
+./build.sh build -e fedora-44-x86_64 -s nvme-cli.spec -p nvme-cli
+
+# Replace in ISO (requires prior build)
+./build.sh replace -p nvme-cli -i /path/to/original.iso
+
+# Clean artifacts
+./build.sh clean
+```
+
+### Source Handling
+
+- **Default:** Downloads sources from upstream URLs in spec file
+- **Modified sources:** Create `<package-name>/` directory and place modified source files there
+- The script uses local sources if present, otherwise downloads from upstream
+
+Example with modified sources:
+```bash
+mkdir nvme-cli
+cp /path/to/modified-nvme-cli-3.0.tar.gz nvme-cli/
+./build.sh build -e fedora-44-x86_64 -s nvme-cli.spec -p nvme-cli
+```
+
 **END**

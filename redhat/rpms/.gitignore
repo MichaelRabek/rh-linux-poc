@@ -1,0 +1,16 @@
+# Build artifacts
+build/
+*.rpm
+*.src.rpm
+
+# Mock artifacts
+.mock/
+
+# ISO work files
+*.iso
+
+# Temporary files
+*.log
+*.tmp
+*~
+.*.swp

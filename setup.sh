@@ -69,7 +69,8 @@ install_devel_pkgs() {
             pesign python3-devel python3-docutils xmlto rpm-build yum-utils sg3_utils dwarves libbabeltrace-devel libbpf-devel openssl-devel \
             wget bison acpica-tools binutils gcc gcc-c++ asciidoctor keyutils-libs-devel meson cmake dbus-devel libuuid libuuid-devel \
             json-c-devel json-c json-c-doc clang openssl kmod-devel python3-sphinx python3-sphinx_rtd_theme swig \
-            systemd-devel mock lorax tar gpg pciutils copr-cli nvme-cli nasm
+            systemd-devel mock lorax tar gpg pciutils copr-cli nvme-cli nasm \
+            createrepo_c genisoimage isomd5sum xorriso syslinux rpmdevtools
         sudo usermod -a -G mock $USER
         touch .edk2pkgs
     fi
