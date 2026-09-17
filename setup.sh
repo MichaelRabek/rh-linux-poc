@@ -8,6 +8,7 @@
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 #echo "DIR = $DIR"
 . $DIR/defaults.sh
+. $DIR/vm-lib/colors.sh
 
 # Configuraiton
 MODES="quickstart|user|devel|devel_ssh|env|virt|edk2|edk2_zip|net|router"
@@ -139,6 +140,7 @@ install_env() {
             cp -fv .env.example .env
         fi
 
+        MACS=""
         FOO="$(./gen_macaddr.py)"
         if [ -z "$FOO" ]; then
             echo " : gen_macaddr.py failed! "
@@ -146,6 +148,7 @@ install_env() {
         else
             sed -i "s/^HOST_MAC1.*/HOST_MAC1\=\"$FOO\"/" .env
             echo " : set HOST_MAC1 to $FOO"
+            MACS="$MACS $FOO"
         fi
         FOO="$(./gen_macaddr.py)"
         if [ -z "$FOO" ]; then
@@ -154,6 +157,7 @@ install_env() {
         else
             sed -i "s/^HOST_MAC2.*/HOST_MAC2\=\"$FOO\"/" .env
             echo " : set HOST_MAC2 to $FOO"
+            MACS="$MACS $FOO"
         fi
         FOO="$(./gen_macaddr.py)"
         if [ -z "$FOO" ]; then
@@ -162,6 +166,7 @@ install_env() {
         else
             sed -i "s/^HOST_MAC3.*/HOST_MAC3\=\"$FOO\"/" .env
             echo " : set HOST_MAC3 to $FOO"
+            MACS="$MACS $FOO"
         fi
         FOO="$(./gen_macaddr.py)"
         if [ -z "$FOO" ]; then
@@ -170,6 +175,7 @@ install_env() {
         else
             sed -i "s/^TARGET_MAC1.*/TARGET_MAC1\=\"$FOO\"/" .env
             echo " : set TARGET_MAC1 to $FOO"
+            MACS="$MACS $FOO"
         fi
         FOO="$(./gen_macaddr.py)"
         if [ -z "$FOO" ]; then
@@ -178,6 +184,7 @@ install_env() {
         else
             sed -i "s/^TARGET_MAC2.*/TARGET_MAC2\=\"$FOO\"/" .env
             echo " : set TARGET_MAC3 to $FOO"
+            MACS="$MACS $FOO"
         fi
         FOO="$(./gen_macaddr.py)"
         if [ -z "$FOO" ]; then
@@ -186,6 +193,11 @@ install_env() {
         else
             sed -i "s/^TARGET_MAC3.*/TARGET_MAC3\=\"$FOO\"/" .env
             echo " : set TARGET_MAC3 to $FOO"
+            MACS="$MACS $FOO"
+        fi
+
+        if [ "$(printf '%s\n' $MACS | sort -u | wc -l)" -ne 6 ]; then
+            error "duplicate MAC address generated in .env, aborting!"
         fi
 
         FOO="$(uuidgen)"
