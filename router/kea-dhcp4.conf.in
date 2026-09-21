@@ -28,6 +28,16 @@
     "rebind-timer": 1800,
     "valid-lifetime": 3600,
 
+    {
+    "option-def": [
+      {
+        "name": "nas-targets",
+        "code": 224,
+        "type": "text",
+        "array": false
+      }
+    ],
+  }
     "option-data": [
         {
             "name": "default-ip-ttl",
@@ -137,6 +147,10 @@
                     "name": "classless-static-route",
                     "code": 121,
                     "data": "${ROUTER_TO_TARGET_NET2} - ${ROUTER_TO_HOST_IP2}, ${BRIDGE1_NET} - ${ROUTER_TO_HOST_IP2}"
+                },
+                {
+                    "name": "nas-targets",
+                    "data": "nvme+tcp://192.168.21.2/nqn.2014-08.org.nvmexpress.discovery/1"
                 }
             ],
             "reservations": [
@@ -157,6 +171,10 @@
                     "name": "classless-static-route",
                     "code": 121,
                     "data": "${ROUTER_TO_TARGET_NET3} - ${ROUTER_TO_HOST_IP3}, ${BRIDGE2_NET} - ${ROUTER_TO_HOST_IP3}"
+                },
+                {
+                    "name": "nas-targets",
+                    "data": "nvme+tcp://192.168.22.2/nqn.2014-08.org.nvmexpress.discovery/1"
                 }
             ],
             "reservations": [
