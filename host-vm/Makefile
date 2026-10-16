@@ -2,6 +2,14 @@
 # SPDX-License-Identifier: GPL-3.0+
 # Copyright (C) 2025 Michal Rábek <mrabek@redhat.com> All rights reserved.
 
+# Several targets below declare '.ONESHELL: <target>', but .ONESHELL is not
+# scoped per-target: declaring it anywhere makes every recipe in this file
+# run as a single shell script. Without -e, a failing command mid-recipe
+# doesn't stop the recipe, so make only sees the exit status of the last
+# command. Force errexit/pipefail so failures actually abort and propagate.
+SHELL := bash
+.SHELLFLAGS := -eo pipefail -c
+
 VMNAME := $(shell basename $$PWD)
 DRIVE_CAP ?= 70G
 QEMU_ARGS ?= ""
@@ -166,15 +174,15 @@ xterm:
 
 .PHONY: iso
 .ONESHELL: iso
-iso:
+iso: .diso
 	@old=$$(cat .diso 2>/dev/null); old_mtime=$$(stat -c %Y .diso 2>/dev/null)
 	old_copr=$$(cat .use_copr 2>/dev/null)
-	source ../defaults.sh && export MIRROR_CENTOS MIRROR_FEDORA && python3 ../iso_selector.py
 	new=$$(cat .diso 2>/dev/null)
 	new_copr=$$(cat .use_copr 2>/dev/null)
 	if [ "$$old" = "$$new" ] && [ -n "$$old_mtime" ]; then touch -d @$$old_mtime .diso; fi
 	if [ "$$old_copr" != "$$new_copr" ]; then rm -f boot.iso; fi
 
+.PHONY: .diso
 .diso:
 	@source ../defaults.sh && export MIRROR_CENTOS MIRROR_FEDORA && python3 ../iso_selector.py
 
@@ -334,11 +342,10 @@ eficonfig/config: eficonfig/config.in eficonfig/config2.in
 	@echo ""
 
 efidisk: efidisk.in eficonfig/startup.nsh eficonfig/VConfig.efi eficonfig/NvmeOfCli.efi eficonfig/config .build/hostid
-	-[ -d efi ] && rmdir efi
 	@echo "efidisk: copy vm_vars.fd"
+# Tolerate a missing or non-empty leftover efi/ dir without masking later failures
+	[ -d efi ] && rmdir efi || true
 	cp -f ../ISO/OVMF_VARS.fd vm_vars.fd
-# This ensures the target execution can be interrupted
-	set -e
 	cp -v efidisk.in efidisk
 
 	sudo losetup -D loop1
@@ -359,7 +366,7 @@ efidisk: efidisk.in eficonfig/startup.nsh eficonfig/VConfig.efi eficonfig/NvmeOf
 .PHONY: vm_vars.fd
 vm_vars.fd: eficonfig/config nvmeof-utils/ovmf_vars_set
 	@echo "vm_vars.fd: copy vm_vars.fd"
-	cp -f ../ISO/OVMF_VARS.fd $@
+	cp --remove-destination ../ISO/OVMF_VARS.fd $@
 	./nvmeof-utils/ovmf_vars_set $@ $<
 
 nvmeof-utils/ovmf_vars_set: nvmeof-utils/ovmf_vars_set.c
@@ -385,8 +392,8 @@ boot.iso: .diso anaconda-ks.cfg ../vm-lib/common.sh
 	# rm -f .anaconda-ks.cfg.tmp
 
 anaconda-ks.cfg: anaconda-ks.cfg.template ../defaults.sh $(wildcard ../.env)
-	@source ../defaults.sh && \
-	read -p "Enter a root password for the host-vm: " -s PASSWORD; echo; \
+	@source ../defaults.sh
+	read -p "Enter a root password for the host-vm: " -s PASSWORD; echo
 	sed -e "s|<ROOT_PASSWD>|$$(openssl passwd -1 -stdin <<< $$PASSWORD)|" \
 	    -e "s|<COPR_USER>|$$COPR_USER|" \
 	    -e "s|<COPR_PROJECT>|$$COPR_PROJECT|" $< > $@
@@ -432,8 +439,10 @@ clean: clean-config
 	-rm -f .ip
 	-rm -f .use_copr
 	-rm -f anaconda-ks.cfg
+	-rm -f .anaconda-ks.cfg.tmp
 	-rm -f efidisk
 	-rm -f bootlog
+	-rm -f .durl .diso
 
 .PHONY: is-running
 is-running:

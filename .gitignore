@@ -54,5 +54,6 @@ host-vm/efi.tgz
 host-vm/copy_efi.sh
 host-vm/eficonfig/config
 host-vm/efidisk
+host-vm/.anaconda-ks.cfg.tmp
 .env
 CLAUDE.md
