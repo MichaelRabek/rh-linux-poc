@@ -54,16 +54,16 @@ def load_configs(test_files: List[str]) -> List[Dict[str, Any]]:
 
 
 def resolve_target_ip(attempt: Dict[str, Any], attempt_idx: int, environment: Dict[str, Any]) -> str:
-    target_ip = attempt.get('targetIp', 'default')
+    target_ip = attempt.get('targetIp4', 'default')
     if target_ip != 'default':
         return target_ip.split('/')[0]
 
     network = environment.get('network', {})
     if attempt_idx == 0:
-        ip = network.get('virbr1', {}).get('targetVmIp', '')
+        ip = network.get('virbr1', {}).get('targetVmIp4', '')
         return ip.split('/')[0] if ip else DEFAULTS['TARGET_IP2']
     elif attempt_idx == 1:
-        ip = network.get('virbr2', {}).get('targetVmIp', '')
+        ip = network.get('virbr2', {}).get('targetVmIp4', '')
         return ip.split('/')[0] if ip else DEFAULTS['TARGET_IP3']
     return DEFAULTS['TARGET_IP2']
 

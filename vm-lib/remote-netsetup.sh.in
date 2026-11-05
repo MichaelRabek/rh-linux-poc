@@ -16,7 +16,7 @@ mac2iface() {
 }
 
 # TPL_* below are the only envsubst placeholders in this file. Everything
-# derived from them (VMNAME, MAC2, IP2, IF2, iface, ip_config, ...) is a
+# derived from them (VMNAME, MAC2, V4_IP2, IF2, iface, ip_config, ...) is a
 # plain runtime shell variable with a *different* name on purpose: envsubst
 # does a blind whole-file text substitution, not just a single "declaration"
 # line, so a runtime variable reused with the same name as a placeholder
@@ -28,12 +28,12 @@ VMNAME="${TPL_VMNAME}"
 MAC1="$(to_lower "${TPL_MAC1}")"
 MAC2="$(to_lower "${TPL_MAC2}")"
 MAC3="$(to_lower "${TPL_MAC3}")"
-IP1="${TPL_IP1}"
-IP2="${TPL_IP2}"
-IP3="${TPL_IP3}"
-# GATEWAY/ROUTES2/ROUTES3/DNS_SERVERS are only non-empty in static router
+V4_IP1="${TPL_V4_IP1}"
+V4_IP2="${TPL_V4_IP2}"
+V4_IP3="${TPL_V4_IP3}"
+# V4_GATEWAY/ROUTES2/ROUTES3/DNS_SERVERS are only non-empty in static router
 # mode - see setup_iface() below for how they're applied (or ignored).
-GATEWAY="${TPL_GATEWAY}"
+V4_GATEWAY="${TPL_V4_GATEWAY}"
 ROUTES2="${TPL_ROUTES2}"
 ROUTES3="${TPL_ROUTES3}"
 DNS_SERVERS="${TPL_DNS_SERVERS}"
@@ -178,16 +178,16 @@ setup_iface() {
 	fi
 }
 
-# IF1 is the router-facing (gateway) interface: it must be allowed to hold
-# the default route, so never-default is "no". GATEWAY/ROUTES2/ROUTES3/
+# V4_IP1 is the router-facing (gateway) interface: it must be allowed to hold
+# the default route, so never-default is "no". V4_GATEWAY/ROUTES2/ROUTES3/
 # DNS_SERVERS are only non-empty in static router mode, and are ignored by
 # the dhcp branch above whenever an interface's IP config is "dhcp" (e.g.
-# the SLIRP/no-br0 case forces IP1 to "dhcp" even in static mode, so the
+# the SLIRP/no-br0 case forces V4_IP1 to "dhcp" even in static mode, so the
 # gateway/DNS override is safely skipped for that interface without any
 # extra flag needed).
-setup_iface "$IF1" "$IP1" no  "$GATEWAY" ""         "$DNS_SERVERS"
-setup_iface "$IF2" "$IP2" yes ""         "$ROUTES2" "$DNS_SERVERS"
-setup_iface "$IF3" "$IP3" yes ""         "$ROUTES3" "$DNS_SERVERS"
+setup_iface "$IF1" "$V4_IP1" no  "$V4_GATEWAY" ""         "$DNS_SERVERS"
+setup_iface "$IF2" "$V4_IP2" yes ""         "$ROUTES2" "$DNS_SERVERS"
+setup_iface "$IF3" "$V4_IP3" yes ""         "$ROUTES3" "$DNS_SERVERS"
 
 nmcli g hostname "$VMNAME"
 

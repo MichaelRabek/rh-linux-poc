@@ -33,7 +33,7 @@ class NetworkSetup:
 
             bridge_config = self.network_config[bridge]
             slave = bridge_config.get('slave', 'none')
-            hypervisor_ip = bridge_config.get('hypervisorIp', 'dhcp')
+            hypervisor_ip = bridge_config.get('hypervisorIp4', 'dhcp')
 
             # Convert to CIDR notation if not 'dhcp' and not already in CIDR format
             if hypervisor_ip != 'dhcp' and '/' not in hypervisor_ip:
@@ -79,12 +79,12 @@ class NetworkSetup:
             return False
 
     def _load_target_cidr_env(self) -> Dict[str, str]:
-        """Build environment variables for TARGET_CIDR from network config."""
+        """Build environment variables for TARGET_V4_CIDR from network config."""
         env = os.environ.copy()
         env.update(dotenv_values(self.script_dir / ".env"))
         env['_DEFAULTS_SKIP_ENV'] = '1'
-        env['TARGET_CIDR2'] = f"{DEFAULTS['TARGET_IP2']}/{DEFAULTS['SUBNET']}"
-        env['TARGET_CIDR3'] = f"{DEFAULTS['TARGET_IP3']}/{DEFAULTS['SUBNET']}"
+        env['TARGET_V4_CIDR2'] = f"{DEFAULTS['TARGET_IP2']}/{DEFAULTS['SUBNET']}"
+        env['TARGET_V4_CIDR3'] = f"{DEFAULTS['TARGET_IP3']}/{DEFAULTS['SUBNET']}"
 
         # Extract target IPs and subnet masks from network config
         for bridge_name, bridge_key in [('br1', 'br1'), ('br2', 'br2')]:
@@ -92,7 +92,7 @@ class NetworkSetup:
                 continue
 
             bridge_config = self.network_config[bridge_key]
-            target_ip = bridge_config.get('targetVmIp', '')
+            target_ip = bridge_config.get('targetVmIp4', '')
             subnet_mask = bridge_config.get('subnetMask', 24)
 
             if len(target_ip) == 0 or target_ip == "dhcp":
@@ -109,18 +109,18 @@ class NetworkSetup:
             else:
                 target_cidr = target_ip
 
-            # Set TARGET_IP2 for br1, TARGET_IP3 for br2
+            # Set TARGET_V4_CIDR2 for br1, TARGET_V4_CIDR3 for br2
             if bridge_key == 'br1':
-                env['TARGET_CIDR2'] = target_cidr
+                env['TARGET_V4_CIDR2'] = target_cidr
             elif bridge_key == 'br2':
-                env['TARGET_CIDR3'] = target_cidr
+                env['TARGET_V4_CIDR3'] = target_cidr
 
         return env
 
     def _get_target_vm_host(self) -> str:
         """Get the target VM's reachable IP from the network config (br0)."""
         br0 = self.network_config.get('br0', {})
-        target_ip = br0.get('targetVmIp', '')
+        target_ip = br0.get('targetVmIp4', '')
         if target_ip:
             return target_ip.split('/')[0]
         return DEFAULTS.get('TARGET_IP2', '192.168.101.20')
@@ -136,7 +136,7 @@ class NetworkSetup:
         if not self._check_target_vm_disk():
             raise RuntimeError("Target VM disk not ready")
 
-        # Prepare environment with TARGET_CIDR variables
+        # Prepare environment with TARGET_V4_CIDR variables
         env = self._load_target_cidr_env()
 
         # Build vm.sh command with display mode

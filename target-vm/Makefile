@@ -146,8 +146,8 @@ iso:
 	@source ../defaults.sh
 	@source ../vm-lib/common.sh
 
-	split_cidr $$TARGET_CIDR2 TARGET_IP2 MASK
-	split_cidr $$TARGET_CIDR3 TARGET_IP3 MASK
+	split_cidr $$TARGET_V4_CIDR2 TARGET_IP2 MASK
+	split_cidr $$TARGET_V4_CIDR3 TARGET_IP3 MASK
 
 	cp $< $@
 	sed -i "s/HOSTNQN/$$HOSTNQN/" $@

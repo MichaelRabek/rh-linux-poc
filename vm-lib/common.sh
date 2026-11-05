@@ -287,7 +287,7 @@ resolve_display_mode() {
 bridge_iface() {
     local br_name=""
     local netdev=""
-    local ip_addr=""
+    local ipv4_addr=""
     local _optional=false
 
     # Parse flags
@@ -306,10 +306,9 @@ Arguments:
                     - If not provided, will prompt interactively
   IP_ADDRESS        IPv4 address in CIDR notation or 'dhcp' (optional)
                     - If not provided, will prompt interactively
-                    - Default for br1: $HOSTGW_CIDR2
-                    - Default for br2: $HOSTGW_CIDR3
+                    - Default for br1: $HOSTGW_V4_CIDR2
+                    - Default for br2: $HOSTGW_V4_CIDR3
                     - Default for others: dhcp
-
 Options:
   --optional        Skip bridge creation entirely when the slave interface
                     is 'none' (instead of creating a bridge without a slave)
@@ -340,7 +339,7 @@ EOF
     # Parse positional arguments
     br_name="$1"
     netdev="$2"
-    ip_addr="$3"
+    ipv4_addr="$3"
 
     if [ -z "$br_name" ]; then
         echo "Error: Bridge name is required" >&2
@@ -367,7 +366,7 @@ EOF
     fi
 
     # Capture existing IP before the interface is brought down
-    local _existing_ip=""
+    local _existing_ipv4=""
 
     # Create bridge based on whether it's none or bridged
     if [[ "$netdev" == *"none"* ]]; then
@@ -389,9 +388,9 @@ EOF
         local _ip_method
         _ip_method=$(nmcli -t -f ipv4.method con show "$(nmcli -t -f GENERAL.CONNECTION dev show "$netdev" | cut -d: -f2)" 2>/dev/null)
         if [[ "$_ip_method" == *"manual"* ]]; then
-            _existing_ip=$(ip -4 -o addr show dev "$netdev" 2>/dev/null | awk '{print $4}' | head -1)
+            _existing_ipv4=$(ip -4 -o addr show dev "$netdev" 2>/dev/null | awk '{print $4}' | head -1)
 	elif [[ "$_ip_method" == *"auto"* ]]; then
-            _existing_ip="dhcp"
+            _existing_ipv4="dhcp"
         fi
         local br_conn="${br_name}"
         sudo nmcli dev down $netdev || true
@@ -402,45 +401,45 @@ EOF
     fi
 
     # Determine default IP address: prefer the slave NIC's existing IP
-    if [ -n "$_existing_ip" ]; then
-        local ip_addr_default="$_existing_ip"
+    if [ -n "$_existing_ipv4" ]; then
+        local ipv4_addr_default="$_existing_ipv4"
     else
         case ${br_name} in
             "$BRIDGE1_NAME")
-                local ip_addr_default=$HOSTGW_CIDR2;;
+                local ipv4_addr_default=$HOSTGW_V4_CIDR2;;
             "$BRIDGE2_NAME")
-                local ip_addr_default=$HOSTGW_CIDR3;;
+                local ipv4_addr_default=$HOSTGW_V4_CIDR3;;
             *)
-                local ip_addr_default='dhcp';;
+                local ipv4_addr_default='dhcp';;
         esac
     fi
 
     # Interactive prompt for IP address if not provided
-    if [ -z "$ip_addr" ]; then
+    if [ -z "$ipv4_addr" ]; then
         echo ""
         while true; do
-            read -r -p "Enter the IP address in CIDR notation of the hypervisor (this machine) on the ${br_name} network or \"dhcp\" to keep dynamic addressing (default: ${ip_addr_default}): " ip_addr
-            ip_addr=${ip_addr:-$ip_addr_default}
-            if [ "${ip_addr}" = 'dhcp' ] || validate_cidr "${ip_addr}"; then
+            read -r -p "Enter the IP address in CIDR notation of the hypervisor (this machine) on the ${br_name} network or \"dhcp\" to keep dynamic addressing (default: ${ipv4_addr_default}): " ipv4_addr
+            ipv4_addr=${ipv4_addr:-$ipv4_addr_default}
+            if [ "${ipv4_addr}" = 'dhcp' ] || validate_cidr "${ipv4_addr}"; then
                 break
             fi
             echo "Error: Invalid CIDR notation. Please enter a valid IPv4 address in CIDR format (e.g., 192.168.101.1/24) or \"dhcp\"."
         done
     else
         # Validate the provided IP address
-        if [ "${ip_addr}" != 'dhcp' ] && ! validate_cidr "${ip_addr}"; then
-            echo "Error: Invalid CIDR notation: ${ip_addr}" >&2
+        if [ "${ipv4_addr}" != 'dhcp' ] && ! validate_cidr "${ipv4_addr}"; then
+            echo "Error: Invalid CIDR notation: ${ipv4_addr}" >&2
             echo "Please enter a valid IPv4 address in CIDR format (e.g., 192.168.101.1/24) or \"dhcp\"." >&2
             return 1
         fi
     fi
 
     # Configure IP address
-    if [ ${ip_addr} = 'dhcp' ]; then
+    if [ ${ipv4_addr} = 'dhcp' ]; then
         sudo nmcli conn modify ${br_conn} ipv4.method auto ipv6.method shared
         return 0
     else
-        sudo nmcli conn modify ${br_conn} ipv4.method manual ipv6.method shared ipv4.addresses ${ip_addr}
+        sudo nmcli conn modify ${br_conn} ipv4.method manual ipv6.method shared ipv4.addresses ${ipv4_addr}
         sudo nmcli dev reapply ${br_conn}
     fi
 }

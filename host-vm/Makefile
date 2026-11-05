@@ -54,7 +54,7 @@ help:
 	@echo "  install-remote  Install OS to remote NVMe/TCP disk w/out efidisk"
 	@echo "  install-efidisk Install OS to remote NVMe/TCP disk with efidisk"
 	@echo "  start-remote    Start VM from remote NVMe/TCP disk"
-	@echo "  start-tcpdump   Start a tcpdump that collects all TCP traffic from $${TARGET_CIDR2}:$${SUBSYS_PORT}"
+	@echo "  start-tcpdump   Start a tcpdump that collects all TCP traffic from $${TARGET_V4_CIDR2}:$${SUBSYS_PORT}"
 	@echo "  stop-tcpdump    Stop the background tcpdump process"
 	@echo "  enter           Open an SSH connection to the VM in the current terminal window."
 	@echo "  xterm           Open an SSH connection to the VM in an xterm window."
@@ -323,13 +323,13 @@ eficonfig/config: eficonfig/config.in eficonfig/config2.in
 	}
 
 # Configure boot attempts
-	split_cidr $$TARGET_CIDR2 TARGET_IP2 MASK2
-	split_cidr $$TARGET_CIDR3 TARGET_IP3 MASK3
-	split_cidr $$HOST_CIDR2   HOST_IP2   MASK
-	split_cidr $$HOST_CIDR3   HOST_IP3   MASK
+	split_cidr $$TARGET_V4_CIDR2 TARGET_IP2 MASK2
+	split_cidr $$TARGET_V4_CIDR3 TARGET_IP3 MASK3
+	split_cidr $$HOST_V4_CIDR2   HOST_IP2   MASK
+	split_cidr $$HOST_V4_CIDR3   HOST_IP3   MASK
 
-	-configure_attempt 1 "$$HOST_MAC2" "$$HOST_IP2" "$$TARGET_IP2" "$$MASK2" "$$ROUTER_TO_HOST_IP2" && \
-	configure_attempt 2 "$$HOST_MAC3" "$$HOST_IP3" "$$TARGET_IP3" "$$MASK3" "$$ROUTER_TO_HOST_IP3" && \
+	-configure_attempt 1 "$$HOST_MAC2" "$$HOST_IP2" "$$TARGET_IP2" "$$MASK2" "$$ROUTER_TO_HOST_V4_IP2" && \
+	configure_attempt 2 "$$HOST_MAC3" "$$HOST_IP3" "$$TARGET_IP3" "$$MASK3" "$$ROUTER_TO_HOST_V4_IP3" && \
 	configure_attempt 3 "" "" "" && \
 	configure_attempt 4 "" "" ""
 
@@ -413,7 +413,7 @@ config: reconfig
 start-tcpdump:
 	@source ../defaults.sh
 	@source ../vm-lib/common.sh
-	@split_cidr $$TARGET_CIDR2 TARGET_IP2 MASK2
+	@split_cidr $$TARGET_V4_CIDR2 TARGET_IP2 MASK2
 	@read -p "Target IP address (default: $${TARGET_IP2}): " INPUT_TARGET
 	@INPUT_TARGET=$${INPUT_TARGET:-$$TARGET_IP2}
 	@read -p "Target IP port (default: $${SUBSYS_PORT}): " INPUT_PORT
