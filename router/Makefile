@@ -49,7 +49,7 @@ wipe:
 .PHONY: clean
 clean:
 	-rm -f *.log
-	-sed -i '/^TARGET_CIDR[123]=/d;/^HOST_CIDR[123]=/d' ../.env
+	-sed -i '/^TARGET_V4_CIDR[123]=/d;/^HOST_V4_CIDR[123]=/d' ../.env
 
 .PHONY: is-running
 .ONESHELL: is-running

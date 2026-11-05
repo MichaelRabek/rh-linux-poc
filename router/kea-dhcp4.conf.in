@@ -43,7 +43,7 @@
             "code": 17,
             "space": "dhcp4",
             // "csv-format": true,
-            "data": "nvme+tcp://${ROUTER_TO_TARGET_RESIP2}/${SUBNQN}"
+            "data": "nvme+tcp://${ROUTER_TO_TARGET_V4_RESIP2}/${SUBNQN}"
         }
     ],
 
@@ -60,117 +60,117 @@
     "subnet4": [
         {
             "id": 1,
-            "subnet": "${ROUTER_TO_TARGET_NET1}",
-            "pools": [ { "pool": "${ROUTER_TO_TARGET_POOL1}" } ],
+            "subnet": "${ROUTER_TO_TARGET_V4_CIDR1}",
+            "pools": [ { "pool": "${ROUTER_TO_TARGET_V4_POOL1}" } ],
             "interface": "${ROUTER_TO_TARGET_IFACE1}",
             "option-data": [
                 {
                     "name": "routers",
-                    "data": "${ROUTER_TO_TARGET_IP1}"
+                    "data": "${ROUTER_TO_TARGET_V4_IP1}"
                 }
             ],
             "reservations": [
                 {
                     "hw-address": "${TARGET_MAC1}",
-                    "ip-address": "${ROUTER_TO_TARGET_RESIP1}"
+                    "ip-address": "${ROUTER_TO_TARGET_V4_RESIP1}"
                 }
             ]
         },
         {
             "id": 2,
-            "subnet": "${ROUTER_TO_TARGET_NET2}",
-            "pools": [ { "pool": "${ROUTER_TO_TARGET_POOL2}" } ],
+            "subnet": "${ROUTER_TO_TARGET_V4_CIDR2}",
+            "pools": [ { "pool": "${ROUTER_TO_TARGET_V4_POOL2}" } ],
             "interface": "${ROUTER_TO_TARGET_IFACE2}",
             "option-data": [
                 // Classless Static Routes (Option 121)
                 {
                     "name": "classless-static-route",
                     "code": 121,
-                    "data": "${ROUTER_TO_HOST_NET2} - ${ROUTER_TO_TARGET_IP2}, ${BRIDGE1_NET} - ${ROUTER_TO_TARGET_IP2}"
+                    "data": "${ROUTER_TO_HOST_V4_CIDR2} - ${ROUTER_TO_TARGET_V4_IP2}, ${BRIDGE1_V4_CIDR} - ${ROUTER_TO_TARGET_V4_IP2}"
                 }
             ],
             "reservations": [
                 {
                     "hw-address": "${TARGET_MAC2}",
-                    "ip-address": "${ROUTER_TO_TARGET_RESIP2}"
+                    "ip-address": "${ROUTER_TO_TARGET_V4_RESIP2}"
                 }
             ]
         },
         {
             "id": 3,
-            "subnet": "${ROUTER_TO_TARGET_NET3}",
-            "pools": [ { "pool": "${ROUTER_TO_TARGET_POOL3}" } ],
+            "subnet": "${ROUTER_TO_TARGET_V4_CIDR3}",
+            "pools": [ { "pool": "${ROUTER_TO_TARGET_V4_POOL3}" } ],
             "interface": "${ROUTER_TO_TARGET_IFACE3}",
             "option-data": [
                 // Classless Static Routes (Option 121)
                 {
                     "name": "classless-static-route",
                     "code": 121,
-                    "data": "${ROUTER_TO_HOST_NET3} - ${ROUTER_TO_TARGET_IP3}, ${BRIDGE2_NET} - ${ROUTER_TO_TARGET_IP3}"
+                    "data": "${ROUTER_TO_HOST_V4_CIDR3} - ${ROUTER_TO_TARGET_V4_IP3}, ${BRIDGE2_V4_CIDR} - ${ROUTER_TO_TARGET_V4_IP3}"
                 }
             ],
             "reservations": [
                 {
                     "hw-address": "${TARGET_MAC3}",
-                    "ip-address": "${ROUTER_TO_TARGET_RESIP3}"
+                    "ip-address": "${ROUTER_TO_TARGET_V4_RESIP3}"
                 }
             ]
         },
         {
             "id": 4,
-            "subnet": "${ROUTER_TO_HOST_NET1}",
-            "pools": [ { "pool": "${ROUTER_TO_HOST_POOL1}" } ],
+            "subnet": "${ROUTER_TO_HOST_V4_CIDR1}",
+            "pools": [ { "pool": "${ROUTER_TO_HOST_V4_POOL1}" } ],
             "interface": "${ROUTER_TO_HOST_IFACE1}",
             "option-data": [
                 {
                     "name": "routers",
-                    "data": "${ROUTER_TO_HOST_IP1}"
+                    "data": "${ROUTER_TO_HOST_V4_IP1}"
                 }
             ],
             "reservations": [
                 {
                     "hw-address": "${HOST_MAC1}",
-                    "ip-address": "${ROUTER_TO_HOST_RESIP1}"
+                    "ip-address": "${ROUTER_TO_HOST_V4_RESIP1}"
                 }
             ]
         },
         {
             "id": 5,
-            "subnet": "${ROUTER_TO_HOST_NET2}",
-            "pools": [ { "pool": "${ROUTER_TO_HOST_POOL2}" } ],
+            "subnet": "${ROUTER_TO_HOST_V4_CIDR2}",
+            "pools": [ { "pool": "${ROUTER_TO_HOST_V4_POOL2}" } ],
             "interface": "${ROUTER_TO_HOST_IFACE2}",
             "option-data": [
                 // Classless Static Routes (Option 121)
                 {
                     "name": "classless-static-route",
                     "code": 121,
-                    "data": "${ROUTER_TO_TARGET_NET2} - ${ROUTER_TO_HOST_IP2}, ${BRIDGE1_NET} - ${ROUTER_TO_HOST_IP2}"
+                    "data": "${ROUTER_TO_TARGET_V4_CIDR2} - ${ROUTER_TO_HOST_V4_IP2}, ${BRIDGE1_V4_CIDR} - ${ROUTER_TO_HOST_V4_IP2}"
                 }
             ],
             "reservations": [
                 {
                     "hw-address": "${HOST_MAC2}",
-                    "ip-address": "${ROUTER_TO_HOST_RESIP2}"
+                    "ip-address": "${ROUTER_TO_HOST_V4_RESIP2}"
                 }
             ]
         },
         {
             "id": 6,
-            "subnet": "${ROUTER_TO_HOST_NET3}",
-            "pools": [ { "pool": "${ROUTER_TO_HOST_POOL3}" } ],
+            "subnet": "${ROUTER_TO_HOST_V4_CIDR3}",
+            "pools": [ { "pool": "${ROUTER_TO_HOST_V4_POOL3}" } ],
             "interface": "${ROUTER_TO_HOST_IFACE3}",
             "option-data": [
                 // Classless Static Routes (Option 121)
                 {
                     "name": "classless-static-route",
                     "code": 121,
-                    "data": "${ROUTER_TO_TARGET_NET3} - ${ROUTER_TO_HOST_IP3}, ${BRIDGE2_NET} - ${ROUTER_TO_HOST_IP3}"
+                    "data": "${ROUTER_TO_TARGET_V4_CIDR3} - ${ROUTER_TO_HOST_V4_IP3}, ${BRIDGE2_V4_CIDR} - ${ROUTER_TO_HOST_V4_IP3}"
                 }
             ],
             "reservations": [
                 {
                     "hw-address": "${HOST_MAC3}",
-                    "ip-address": "${ROUTER_TO_HOST_RESIP3}"
+                    "ip-address": "${ROUTER_TO_HOST_V4_RESIP3}"
                 }
             ]
         }

@@ -8,7 +8,7 @@
 # Usage: build-remote-netsetup.sh <output-path>
 #
 # Required environment variables: VMNAME MAC1 MAC2 MAC3
-# Optional environment variables (default empty): IP1 IP2 IP3 GATEWAY
+# Optional environment variables (default empty): V4_IP1 V4_IP2 V4_IP3 V4_GATEWAY
 #   ROUTES2 ROUTES3 DNS_SERVERS
 # Optional environment variables (default 1): NBFT_WORKAROUND
 #
@@ -43,9 +43,15 @@ done
 # template-side variable sharing a placeholder's name would also get
 # clobbered with the raw input value wherever it's referenced later in the
 # file, not just at its "declaration" line).
-export TPL_VMNAME="$VMNAME" TPL_MAC1="$MAC1" TPL_MAC2="$MAC2" TPL_MAC3="$MAC3"
-export TPL_IP1="${IP1:-}" TPL_IP2="${IP2:-}" TPL_IP3="${IP3:-}"
-export TPL_GATEWAY="${GATEWAY:-}" TPL_ROUTES2="${ROUTES2:-}" TPL_ROUTES3="${ROUTES3:-}"
+export TPL_VMNAME="$VMNAME"
+export TPL_MAC1="$MAC1"
+export TPL_MAC2="$MAC2"
+export TPL_MAC3="$MAC3"
+export TPL_V4_IP1="${V4_IP1:-}"
+export TPL_V4_IP2="${V4_IP2:-}"
+export TPL_V4_IP3="${V4_IP3:-}"
+export TPL_V4_GATEWAY="${V4_GATEWAY:-}"
+export TPL_ROUTES3="${ROUTES3:-}"
 export TPL_DNS_SERVERS="${DNS_SERVERS:-}"
 export TPL_NBFT_WORKAROUND="${NBFT_WORKAROUND:-1}"
 
@@ -54,7 +60,7 @@ export TPL_NBFT_WORKAROUND="${NBFT_WORKAROUND:-1}"
 # be left untouched for the VM to evaluate at execution time, instead of
 # envsubst blanking them out here (envsubst replaces any *unset* $VAR it's
 # allowed to touch with an empty string).
-TEMPLATE_VARS='$TPL_VMNAME $TPL_MAC1 $TPL_MAC2 $TPL_MAC3 $TPL_IP1 $TPL_IP2 $TPL_IP3 $TPL_GATEWAY $TPL_ROUTES2 $TPL_ROUTES3 $TPL_DNS_SERVERS $TPL_NBFT_WORKAROUND'
+TEMPLATE_VARS='$TPL_VMNAME $TPL_MAC1 $TPL_MAC2 $TPL_MAC3 $TPL_V4_IP1 $TPL_V4_IP2 $TPL_V4_IP3 $TPL_V4_GATEWAY $TPL_ROUTES2 $TPL_ROUTES3 $TPL_DNS_SERVERS $TPL_NBFT_WORKAROUND'
 
 mkdir -p "$(dirname -- "$OUT")"
 envsubst "$TEMPLATE_VARS" < "$TEMPLATE" > "$OUT"

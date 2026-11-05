@@ -26,8 +26,8 @@ show-help() {
     echo "  --gen-nqn  - Generate a fresh random host NQN"
     echo ""
     echo " Environment variables:"
-    echo "  HOST_CIDR2 - Soft target IP address in CIDR notation (default: 192.168.101.30/24)"
-    echo "  HOST_CIDR3 - Soft target IP address in CIDR notation (default: 192.168.110.30/24)"
+    echo "  HOST_V4_CIDR2 - Soft target IP address in CIDR notation (default: 192.168.101.30/24)"
+    echo "  HOST_V4_CIDR3 - Soft target IP address in CIDR notation (default: 192.168.110.30/24)"
     echo ""
     exit 0
 }

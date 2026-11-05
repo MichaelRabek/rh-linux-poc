@@ -22,10 +22,10 @@ source $DIR/../defaults.sh
 source $DIR/../vm-lib/common.sh
 
 if [ -z "$TARGET_IP2" ] ; then
-	split_cidr "$TARGET_CIDR2" TARGET_IP2 MASK
+	split_cidr "$TARGET_V4_CIDR2" TARGET_IP2 MASK
 fi
 if [ -z "$TARGET_IP3" ] ; then
-	split_cidr "$TARGET_CIDR3" TARGET_IP3 MASK
+	split_cidr "$TARGET_V4_CIDR3" TARGET_IP3 MASK
 fi
 echo ": using $TARGET_IP2"
 echo ":   and $TARGET_IP3"

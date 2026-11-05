@@ -22,22 +22,22 @@ class EFIConfigGenerator:
             mac_key = f'HOST_MAC{attempt_idx + 2}'
             return DEFAULTS.get(mac_key, 'EA:EB:D3:58:89:58')
 
-        elif field == 'hostIp':
+        elif field == 'hostIp4':
             if attempt_idx == 0:
-                host_ip = self.environment['network']['br1'].get('hostVmIp', '')
+                host_ip = self.environment['network']['br1'].get('hostVmIp4', '')
                 return host_ip.split('/')[0] if host_ip else DEFAULTS.get('HOST_IP2', '192.168.101.30')
             elif attempt_idx == 1:
-                host_ip = self.environment['network']['br2'].get('hostVmIp', '')
+                host_ip = self.environment['network']['br2'].get('hostVmIp4', '')
                 return host_ip.split('/')[0] if host_ip else DEFAULTS.get('HOST_IP3', '192.168.110.30')
             else:
                 return DEFAULTS.get('HOST_IP2', '192.168.101.30')
 
-        elif field == 'targetIp':
+        elif field == 'targetIp4':
             if attempt_idx == 0:
-                target_ip = self.environment['network']['br1'].get('targetVmIp', '')
+                target_ip = self.environment['network']['br1'].get('targetVmIp4', '')
                 return target_ip.split('/')[0] if target_ip else DEFAULTS.get('TARGET_IP2', '192.168.101.20')
             elif attempt_idx == 1:
-                target_ip = self.environment['network']['br2'].get('targetVmIp', '')
+                target_ip = self.environment['network']['br2'].get('targetVmIp4', '')
                 return target_ip.split('/')[0] if target_ip else DEFAULTS.get('TARGET_IP3', '192.168.110.20')
             else:
                 return DEFAULTS.get('TARGET_IP2', '192.168.101.20')
@@ -82,17 +82,17 @@ class EFIConfigGenerator:
             return '0.0.0.0'
 
         if attempt_idx == 0:
-            return DEFAULTS.get('ROUTER_TO_HOST_IP2', '192.168.31.1')
+            return DEFAULTS.get('ROUTER_TO_HOST_V4_IP2', '192.168.31.1')
         elif attempt_idx == 1:
-            return DEFAULTS.get('ROUTER_TO_HOST_IP3', '192.168.32.1')
+            return DEFAULTS.get('ROUTER_TO_HOST_V4_IP3', '192.168.32.1')
         else:
-            return DEFAULTS.get('ROUTER_TO_HOST_IP2', '192.168.31.1')
+            return DEFAULTS.get('ROUTER_TO_HOST_V4_IP2', '192.168.31.1')
 
     def _generate_attempt_config(self, attempt: Dict[str, Any], attempt_idx: int, attempt_num: int) -> str:
         """Generate configuration for a single boot attempt."""
         mac = self._resolve_default(attempt.get('macAddress', 'default'), 'macAddress', attempt_idx)
-        host_ip = self._resolve_default(attempt.get('hostIp', 'default'), 'hostIp', attempt_idx)
-        target_ip = self._resolve_default(attempt.get('targetIp', 'default'), 'targetIp', attempt_idx)
+        host_ip = self._resolve_default(attempt.get('hostIp4', 'default'), 'hostIp4', attempt_idx)
+        target_ip = self._resolve_default(attempt.get('targetIp4', 'default'), 'targetIp4', attempt_idx)
         nqn = self._resolve_default(attempt.get('subsystemNQN', 'default'), 'subsystemNQN', attempt_idx)
         port = self._resolve_default(attempt.get('port', 'default'), 'port', attempt_idx)
         timeout = self._resolve_default(attempt.get('timeout', 'default'), 'timeout', attempt_idx)
@@ -159,5 +159,5 @@ $End"""
             return None
 
         first_attempt = boot_attempts[0]
-        host_ip = self._resolve_default(first_attempt.get('hostIp', 'default'), 'hostIp', 0)
+        host_ip = self._resolve_default(first_attempt.get('hostIp4', 'default'), 'hostIp4', 0)
         return host_ip

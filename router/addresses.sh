@@ -15,43 +15,43 @@ _source_deps
 
 # Target-side subnets (192.168.2x)
 export ROUTER_TO_TARGET_IFACE1="${ROUTER_TO_TARGET_IFACE1:-eth3}"
-export ROUTER_TO_TARGET_IP1="${ROUTER_TO_TARGET_IP1:-192.168.20.1}"
-export ROUTER_TO_TARGET_NET1="${ROUTER_TO_TARGET_NET1:-192.168.20.0/24}"
+export ROUTER_TO_TARGET_V4_IP1="${ROUTER_TO_TARGET_V4_IP1:-192.168.20.1}"
+export ROUTER_TO_TARGET_V4_CIDR1="${ROUTER_TO_TARGET_V4_CIDR1:-192.168.20.0/24}"
 
 export ROUTER_TO_TARGET_IFACE2="${ROUTER_TO_TARGET_IFACE2:-eth4}"
-export ROUTER_TO_TARGET_IP2="${ROUTER_TO_TARGET_IP2:-192.168.21.1}"
-export ROUTER_TO_TARGET_NET2="${ROUTER_TO_TARGET_NET2:-192.168.21.0/24}"
+export ROUTER_TO_TARGET_V4_IP2="${ROUTER_TO_TARGET_V4_IP2:-192.168.21.1}"
+export ROUTER_TO_TARGET_V4_CIDR2="${ROUTER_TO_TARGET_V4_CIDR2:-192.168.21.0/24}"
 
 export ROUTER_TO_TARGET_IFACE3="${ROUTER_TO_TARGET_IFACE3:-eth5}"
-export ROUTER_TO_TARGET_IP3="${ROUTER_TO_TARGET_IP3:-192.168.22.1}"
-export ROUTER_TO_TARGET_NET3="${ROUTER_TO_TARGET_NET3:-192.168.22.0/24}"
+export ROUTER_TO_TARGET_V4_IP3="${ROUTER_TO_TARGET_V4_IP3:-192.168.22.1}"
+export ROUTER_TO_TARGET_V4_CIDR3="${ROUTER_TO_TARGET_V4_CIDR3:-192.168.22.0/24}"
 
 # Host-side subnets (192.168.3x)
 export ROUTER_TO_HOST_IFACE1="${ROUTER_TO_HOST_IFACE1:-eth6}"
-export ROUTER_TO_HOST_IP1="${ROUTER_TO_HOST_IP1:-192.168.30.1}"
-export ROUTER_TO_HOST_NET1="${ROUTER_TO_HOST_NET1:-192.168.30.0/24}"
+export ROUTER_TO_HOST_V4_IP1="${ROUTER_TO_HOST_V4_IP1:-192.168.30.1}"
+export ROUTER_TO_HOST_V4_CIDR1="${ROUTER_TO_HOST_V4_CIDR1:-192.168.30.0/24}"
 
 export ROUTER_TO_HOST_IFACE2="${ROUTER_TO_HOST_IFACE2:-eth7}"
-export ROUTER_TO_HOST_IP2="${ROUTER_TO_HOST_IP2:-192.168.31.1}"
-export ROUTER_TO_HOST_NET2="${ROUTER_TO_HOST_NET2:-192.168.31.0/24}"
+export ROUTER_TO_HOST_V4_IP2="${ROUTER_TO_HOST_V4_IP2:-192.168.31.1}"
+export ROUTER_TO_HOST_V4_CIDR2="${ROUTER_TO_HOST_V4_CIDR2:-192.168.31.0/24}"
 
 export ROUTER_TO_HOST_IFACE3="${ROUTER_TO_HOST_IFACE3:-eth8}"
-export ROUTER_TO_HOST_IP3="${ROUTER_TO_HOST_IP3:-192.168.32.1}"
-export ROUTER_TO_HOST_NET3="${ROUTER_TO_HOST_NET3:-192.168.32.0/24}"
+export ROUTER_TO_HOST_V4_IP3="${ROUTER_TO_HOST_V4_IP3:-192.168.32.1}"
+export ROUTER_TO_HOST_V4_CIDR3="${ROUTER_TO_HOST_V4_CIDR3:-192.168.32.0/24}"
 
 export DNS_SERVERS="${DNS_SERVERS:-8.8.8.8, 8.8.4.4}"
 
 # Derived values for templates and other scripts
 for _role in TARGET HOST; do
 	for _n in 1 2 3; do
-		_ip_var="ROUTER_TO_${_role}_IP${_n}"
-		_net_var="ROUTER_TO_${_role}_NET${_n}"
+		_ip_var="ROUTER_TO_${_role}_V4_IP${_n}"
+		_net_var="ROUTER_TO_${_role}_V4_CIDR${_n}"
 		_ip="${!_ip_var}"
 		_base="${_ip%.*}"
 		_mask="${!_net_var#*/}"
-		export "ROUTER_TO_${_role}_POOL${_n}=${_ip} - ${_base}.200"
-		export "ROUTER_TO_${_role}_RESIP${_n}=${_base}.2"
-		export "${_role}_CIDR${_n}=${_base}.2/${_mask}"
+		export "ROUTER_TO_${_role}_V4_POOL${_n}=${_ip} - ${_base}.200"
+		export "ROUTER_TO_${_role}_V4_RESIP${_n}=${_base}.2"
+		export "${_role}_V4_CIDR${_n}=${_base}.2/${_mask}"
 	done
 done
 
@@ -66,7 +66,7 @@ _update_env() {
 
 for _role in TARGET HOST; do
 	for _n in 1 2 3; do
-		_cidr_var="${_role}_CIDR${_n}"
+		_cidr_var="${_role}_V4_CIDR${_n}"
 		_update_env "$_env_file" "$_cidr_var" "${!_cidr_var}"
 	done
 done
@@ -83,7 +83,7 @@ for _i in 1 2; do
 	if [ -n "$_br_addr" ]; then
 		_br_base="${_br_addr%.*}"
 		_br_mask="${_br_addr#*/}"
-		export "BRIDGE${_i}_NET=${_br_base}.0/${_br_mask}"
+		export "BRIDGE${_i}_V4_CIDR=${_br_base}.0/${_br_mask}"
 	fi
 done
 

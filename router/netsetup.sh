@@ -29,8 +29,8 @@ show-help() {
     echo "  static  - Skip DHCP server deployment (default)"
     echo ""
     echo " Environment variables:"
-    echo "  ROUTER_CIDR2 - Router IP address in CIDR notation (default: empty)"
-    echo "  ROUTER_CIDR3 - Router IP address in CIDR notation (default: empty)"
+    echo "  ROUTER_V4_CIDR2 - Router IP address in CIDR notation (default: empty)"
+    echo "  ROUTER_V4_CIDR3 - Router IP address in CIDR notation (default: empty)"
     echo ""
     exit 0
 }
@@ -64,21 +64,21 @@ RUN="incus exec $VMNAME -- "
 	ETH1_CONN="$(lookup_dev_connection eth1)"
 ETH2_CONN="$(lookup_dev_connection eth2)"
 
-if [ -n "$ROUTER_CIDR2" ] ; then
-	$RUN nmcli conn modify "$ETH1_CONN" ipv4.method manual ipv4.addresses "$ROUTER_CIDR2" ipv6.method shared connection.autoconnect yes
+if [ -n "$ROUTER_V4_CIDR2" ] ; then
+	$RUN nmcli conn modify "$ETH1_CONN" ipv4.method manual ipv4.addresses "$ROUTER_V4_CIDR2" ipv6.method shared connection.autoconnect yes
 	$RUN nmcli dev reapply "eth1"
 fi
 
-if [ -n "$ROUTER_CIDR3" ] ; then
-	$RUN nmcli conn modify "$ETH2_CONN" ipv4.method manual ipv4.addresses "$ROUTER_CIDR3" ipv6.method shared connection.autoconnect yes
+if [ -n "$ROUTER_V4_CIDR3" ] ; then
+	$RUN nmcli conn modify "$ETH2_CONN" ipv4.method manual ipv4.addresses "$ROUTER_V4_CIDR3" ipv6.method shared connection.autoconnect yes
 	$RUN nmcli dev reapply "eth2"
 fi
 
 for _role in TARGET HOST; do
 	for _n in 1 2 3; do
 		_iface_var="ROUTER_TO_${_role}_IFACE${_n}"
-		_ip_var="ROUTER_TO_${_role}_IP${_n}"
-		_net_var="ROUTER_TO_${_role}_NET${_n}"
+		_ip_var="ROUTER_TO_${_role}_V4_IP${_n}"
+		_net_var="ROUTER_TO_${_role}_V4_CIDR${_n}"
 		dev_name="${!_iface_var}"
 		ip_cidr="${!_ip_var}/${!_net_var#*/}"
 		dev_conn="$(lookup_dev_connection $dev_name)"

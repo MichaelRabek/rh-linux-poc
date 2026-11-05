@@ -84,42 +84,45 @@ fi
 
 case "$VMNAME" in
     target-vm)
-        GATEWAY="" ROUTES2="" ROUTES3="" DNS_SERVERS=""
+        V4_GATEWAY=""
+        ROUTES2=""
+        ROUTES3=""
+        DNS_SERVERS=""
         if has_router; then
             if has_dhcpd; then
-                TARGET_CIDR1='dhcp'
-                TARGET_CIDR2='dhcp'
-                TARGET_CIDR3='dhcp'
+                TARGET_V4_CIDR1='dhcp'
+                TARGET_V4_CIDR2='dhcp'
+                TARGET_V4_CIDR3='dhcp'
             else
                 # Static mode: use addresses from router/addresses.sh.
-                # TARGET_CIDR1 is forced to 'dhcp' only when there is no
+                # TARGET_V4_CIDR1 is forced to 'dhcp' only when there is no
                 # br0 on the hypervisor: in that case net0/$TARGET_MAC1 is
                 # actually QEMU usermode (SLIRP) networking, not the
-                # router's ROUTER_TO_TARGET_NET1 subnet, and already has its own
+                # router's ROUTER_TO_TARGET_V4_CIDR1 subnet, and already has its own
                 # working DHCP-assigned address/gateway/DNS that must not
-                # be touched. GATEWAY/DNS_SERVERS are computed
+                # be touched. V4_GATEWAY/DNS_SERVERS are computed
                 # unconditionally below - remote-netsetup.sh's dhcp code
                 # path for an interface ignores them entirely, so this is
                 # safe even in the SLIRP case.
                 if [ "$target_ip" = "localhost" ]; then
-                    TARGET_CIDR1='dhcp'
+                    TARGET_V4_CIDR1='dhcp'
                 fi
-                TARGET_CIDR2="${TARGET_CIDR2}"
-                TARGET_CIDR3="${TARGET_CIDR3}"
-                GATEWAY="$ROUTER_TO_TARGET_IP1"
+                TARGET_V4_CIDR2="${TARGET_V4_CIDR2}"
+                TARGET_V4_CIDR3="${TARGET_V4_CIDR3}"
+                V4_GATEWAY="$ROUTER_TO_TARGET_V4_IP1"
                 DNS_SERVERS="${DNS_SERVERS}"
                 # Routes for TARGET: access HOST networks via TARGET interfaces
-                ROUTES2="${ROUTER_TO_HOST_NET2} ${ROUTER_TO_TARGET_IP2}"
-                [ -n "$BRIDGE1_NET" ] && ROUTES2="${ROUTES2}, ${BRIDGE1_NET} ${ROUTER_TO_TARGET_IP2}"
-                ROUTES3="${ROUTER_TO_HOST_NET3} ${ROUTER_TO_TARGET_IP3}"
-                [ -n "$BRIDGE2_NET" ] && ROUTES3="${ROUTES3}, ${BRIDGE2_NET} ${ROUTER_TO_TARGET_IP3}"
+                ROUTES2="${ROUTER_TO_HOST_V4_CIDR2} ${ROUTER_TO_TARGET_V4_IP2}"
+                [ -n "$BRIDGE1_V4_CIDR" ] && ROUTES2="${ROUTES2}, ${BRIDGE1_V4_CIDR} ${ROUTER_TO_TARGET_V4_IP2}"
+                ROUTES3="${ROUTER_TO_HOST_V4_CIDR3} ${ROUTER_TO_TARGET_V4_IP3}"
+                [ -n "$BRIDGE2_V4_CIDR" ] && ROUTES3="${ROUTES3}, ${BRIDGE2_V4_CIDR} ${ROUTER_TO_TARGET_V4_IP3}"
             fi
         fi
         make -C "$VMDIR" .build/tcp.json
         make -C "$VMDIR" -f "$DIR/Makefile" VMNAME="$VMNAME" \
             MAC1="$TARGET_MAC1" MAC2="$TARGET_MAC2" MAC3="$TARGET_MAC3" \
-            IP1="$TARGET_CIDR1" IP2="$TARGET_CIDR2" IP3="$TARGET_CIDR3" \
-            GATEWAY="$GATEWAY" ROUTES2="$ROUTES2" ROUTES3="$ROUTES3" \
+            V4_IP1="$TARGET_V4_CIDR1" V4_IP2="$TARGET_V4_CIDR2" V4_IP3="$TARGET_V4_CIDR3" \
+            V4_GATEWAY="$V4_GATEWAY" ROUTES2="$ROUTES2" ROUTES3="$ROUTES3" \
             DNS_SERVERS="$DNS_SERVERS" \
             NBFT_WORKAROUND="$WORKAROUND_NBFT_STATIC_ROUTING_BUG" \
             .build/remote-netsetup.sh
@@ -131,42 +134,45 @@ set -e
 "
     ;;
     host-vm)
-        GATEWAY="" ROUTES2="" ROUTES3="" DNS_SERVERS=""
+        V4_GATEWAY=""
+        ROUTES2=""
+        ROUTES3=""
+        DNS_SERVERS=""
         if has_router; then
             if has_dhcpd; then
-                HOST_CIDR1='dhcp'
-                HOST_CIDR2='dhcp'
-                HOST_CIDR3='dhcp'
+                HOST_V4_CIDR1='dhcp'
+                HOST_V4_CIDR2='dhcp'
+                HOST_V4_CIDR3='dhcp'
             else
                 # Static mode: use addresses from router/addresses.sh.
-                # HOST_CIDR1 is forced to 'dhcp' only when there is no br0
+                # HOST_V4_CIDR1 is forced to 'dhcp' only when there is no br0
                 # on the hypervisor: in that case net0/$HOST_MAC1 is
                 # actually QEMU usermode (SLIRP) networking, not the
-                # router's ROUTER_TO_HOST_NET1 subnet, and already has its own
+                # router's ROUTER_TO_HOST_V4_CIDR1 subnet, and already has its own
                 # working DHCP-assigned address/gateway/DNS that must not
-                # be touched. GATEWAY/DNS_SERVERS are computed
+                # be touched. V4_GATEWAY/DNS_SERVERS are computed
                 # unconditionally below - remote-netsetup.sh's dhcp code
                 # path for an interface ignores them entirely, so this is
                 # safe even in the SLIRP case.
                 if [ "$target_ip" = "localhost" ]; then
-                    HOST_CIDR1='dhcp'
+                    HOST_V4_CIDR1='dhcp'
                 fi
-                HOST_CIDR2="${HOST_CIDR2}"
-                HOST_CIDR3="${HOST_CIDR3}"
-                GATEWAY="$ROUTER_TO_HOST_IP1"
+                HOST_V4_CIDR2="${HOST_V4_CIDR2}"
+                HOST_V4_CIDR3="${HOST_V4_CIDR3}"
+                V4_GATEWAY="$ROUTER_TO_HOST_V4_IP1"
                 DNS_SERVERS="${DNS_SERVERS}"
                 # Routes for HOST: access TARGET networks via HOST interfaces
-                ROUTES2="${ROUTER_TO_TARGET_NET2} ${ROUTER_TO_HOST_IP2}"
-                [ -n "$BRIDGE1_NET" ] && ROUTES2="${ROUTES2}, ${BRIDGE1_NET} ${ROUTER_TO_HOST_IP2}"
-                ROUTES3="${ROUTER_TO_TARGET_NET3} ${ROUTER_TO_HOST_IP3}"
-                [ -n "$BRIDGE2_NET" ] && ROUTES3="${ROUTES3}, ${BRIDGE2_NET} ${ROUTER_TO_HOST_IP3}"
+                ROUTES2="${ROUTER_TO_TARGET_V4_CIDR2} ${ROUTER_TO_HOST_V4_IP2}"
+                [ -n "$BRIDGE1_V4_CIDR" ] && ROUTES2="${ROUTES2}, ${BRIDGE1_V4_CIDR} ${ROUTER_TO_HOST_V4_IP2}"
+                ROUTES3="${ROUTER_TO_TARGET_V4_CIDR3} ${ROUTER_TO_HOST_V4_IP3}"
+                [ -n "$BRIDGE2_V4_CIDR" ] && ROUTES3="${ROUTES3}, ${BRIDGE2_V4_CIDR} ${ROUTER_TO_HOST_V4_IP3}"
             fi
         fi
         make -C "$VMDIR" .build/discovery.conf
         make -C "$VMDIR" -f "$DIR/Makefile" VMNAME="$VMNAME" \
             MAC1="$HOST_MAC1" MAC2="$HOST_MAC2" MAC3="$HOST_MAC3" \
-            IP1="$HOST_CIDR1" IP2="$HOST_CIDR2" IP3="$HOST_CIDR3" \
-            GATEWAY="$GATEWAY" ROUTES2="$ROUTES2" ROUTES3="$ROUTES3" \
+            V4_IP1="$HOST_V4_CIDR1" V4_IP2="$HOST_V4_CIDR2" V4_IP3="$HOST_V4_CIDR3" \
+            V4_GATEWAY="$V4_GATEWAY" ROUTES2="$ROUTES2" ROUTES3="$ROUTES3" \
             DNS_SERVERS="$DNS_SERVERS" \
             NBFT_WORKAROUND="$WORKAROUND_NBFT_STATIC_ROUTING_BUG" \
             .build/remote-netsetup.sh

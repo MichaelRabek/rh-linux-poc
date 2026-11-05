@@ -73,7 +73,7 @@
           "type": "string",
           "description": "Name of the slave interface to bridge (or 'none' to skip bridging)"
         },
-        "hypervisorIp": {
+        "hypervisorIp4": {
           "oneOf": [
             {
               "type": "string",
@@ -82,7 +82,7 @@
             }
           ]
         },
-        "targetVmIp": {
+        "targetVmIp4": {
           "oneOf": [
             {
               "type": "string",
@@ -91,7 +91,7 @@
             }
           ]
         },
-        "hostVmIp": {
+        "hostVmIp4": {
           "oneOf": [
             {
               "type": "string",
@@ -100,7 +100,7 @@
             }
           ]
         },
-        "routerVmIp": {
+        "routerVmIp4": {
           "oneOf": [
             {
               "type": "string",
@@ -108,7 +108,23 @@
               "description": "IPv4 address with optional CIDR notation or 'dhcp'"
             }
           ],
-          "description": "IP address of the router on this interface. Mutually exclusive with targetVmIp and hostVmIp."
+          "description": "IP address of the router on this interface. Mutually exclusive with targetVmIp4 and hostVmIp4."
+        },
+        "hypervisorIp6": {
+          "type": "string",
+          "description": "IPv6 address with optional CIDR notation, or 'dhcp'"
+        },
+        "targetVmIp6": {
+          "type": "string",
+          "description": "IPv6 address with optional CIDR notation, or 'dhcp'"
+        },
+        "hostVmIp6": {
+          "type": "string",
+          "description": "IPv6 address with optional CIDR notation, or 'dhcp'"
+        },
+        "routerVmIp6": {
+          "type": "string",
+          "description": "IPv6 address of the router on this interface, or 'dhcp'. Mutually exclusive with targetVmIp6 and hostVmIp6."
         },
         "subnetMask": {
           "oneOf": [
@@ -131,11 +147,13 @@
           ]
         }
       },
-      "required": ["hypervisorIp"],
+      "required": ["hypervisorIp4"],
       "not": {
         "anyOf": [
-          { "required": ["routerVmIp", "targetVmIp"] },
-          { "required": ["routerVmIp", "hostVmIp"] }
+          { "required": ["routerVmIp4", "targetVmIp4"] },
+          { "required": ["routerVmIp4", "hostVmIp4"] },
+          { "required": ["routerVmIp6", "targetVmIp6"] },
+          { "required": ["routerVmIp6", "hostVmIp6"] }
         ]
       }
     },
@@ -186,7 +204,7 @@
             }
           ]
         },
-        "hostIp": {
+        "hostIp4": {
           "oneOf": [
             {
               "type": "string",
@@ -205,7 +223,7 @@
             }
           ]
         },
-        "targetIp": {
+        "targetIp4": {
           "oneOf": [
             {
               "type": "string",
@@ -218,6 +236,14 @@
               "description": "Use default target IP"
             }
           ]
+        },
+        "hostIp6": {
+          "type": "string",
+          "description": "IPv6 address of the host, or 'default' to use the default host IPv6 address"
+        },
+        "targetIp6": {
+          "type": "string",
+          "description": "IPv6 address of the target, or 'default' to use the default target IPv6 address"
         },
         "port": {
           "oneOf": [
@@ -266,7 +292,7 @@
           ]
         }
       },
-      "required": ["macAddress", "hostIp", "targetIp", "subsystemNQN"]
+      "required": ["macAddress", "hostIp4", "targetIp4", "subsystemNQN"]
     }
   }
 }

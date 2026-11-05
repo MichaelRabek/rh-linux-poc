@@ -174,7 +174,7 @@ Directories and files are explained here:
 | `host-vm` | - |Contains the scripts and files needed to create and run your QEMU host virtual machine. |
 | `target-vm` | - | Contains the scripts and files needed to create and run your QEMU target virtual machine. |
 | `router` | - | Contains the scripts and configuration files needed to provision and manage the router VM (an Incus system container). Provides firewall, DHCP, and routing services between the `target-vm` and `host-vm`. |
-| `router` | `addresses.sh` | Defines IP addresses, subnets, and interface names for all router-side networks. Sourced by `router/netsetup.sh`, `target-vm/netsetup.sh`, and `host-vm/netsetup.sh`. Also writes computed `TARGET_CIDR*` / `HOST_CIDR*` values back to the root `.env` file. |
+| `router` | `addresses.sh` | Defines IP addresses, subnets, and interface names for all router-side networks. Sourced by `router/netsetup.sh`, `target-vm/netsetup.sh`, and `host-vm/netsetup.sh`. Also writes computed `TARGET_V4_CIDR*` / `HOST_V4_CIDR*` values back to the root `.env` file. |
 | `router` | `netsetup.sh` | Configures the router VM's network interfaces via NetworkManager, loads the nftables firewall ruleset, and deploys the Kea DHCPv4 server configuration inside the Incus container. |
 | `router` | `Makefile` | Build targets for managing the router Incus container. |
 | `router` | `.env.example` | Template listing all configurable router variables (interface names, IPs, subnets) with their defaults. Copy to `.env` to override. |
@@ -202,7 +202,7 @@ file:
 
 Some scripts also write back to `.env` to keep computed state persistent across
 terminal sessions. For example, the router's address configuration
-(`router/addresses.sh`) stores the resolved `TARGET_CIDR*` and `HOST_CIDR*`
+(`router/addresses.sh`) stores the resolved `TARGET_V4_CIDR*` and `HOST_V4_CIDR*`
 values in `.env` so they survive across separate shell sessions.
 
 ### `WORKAROUND_NBFT_STATIC_ROUTING_BUG`
@@ -380,7 +380,7 @@ command on the `target-vm`. If omitted, it defaults to `localhost`. The paramete
 to a physical interface. The script leverages password-less login using SSH keys.
 You will only be prompted for the `root` password once.
 
-The soft target IP addresses are be configured via environment variables `TARGET_CIDR2` and `TARGET_CIDR3`
+The soft target IP addresses are be configured via environment variables `TARGET_V4_CIDR2` and `TARGET_V4_CIDR3`
 (defaults: `192.168.101.20/24` and `192.168.110.20/24`).
 
 Example:
@@ -513,7 +513,7 @@ command on the `host-vm`. If omitted, it defaults to `localhost`. The parameter 
 to a physical interface. The script leverages password-less login using SSH keys.
 You will only be prompted for the `root` password once.
 
-The soft target IP addresses can be configured via environment variables `HOST_CIDR2` and `HOST_CIDR3`
+The soft target IP addresses can be configured via environment variables `HOST_V4_CIDR2` and `HOST_V4_CIDR3`
 (defaults: `192.168.101.20/24` and `192.168.110.20/24`).
 
 ```
@@ -644,9 +644,9 @@ The `tests.json` file defines test environments and boot configurations:
     {
       "name": "Environment Name",
       "network": {
-        "br0":    { "slave": "none", "hypervisorIp": "dhcp", "targetVmIp": "dhcp" },
-        "br1": { "slave": "none", "hypervisorIp": "192.168.101.1/24", "targetVmIp": "192.168.101.20", "subnetMask": 24 },
-        "br2": { "slave": "none", "hypervisorIp": "192.168.110.1/24", "targetVmIp": "192.168.110.20", "subnetMask": 24 }
+        "br0":    { "slave": "none", "hypervisorIp4": "dhcp", "targetVmIp4": "dhcp" },
+        "br1": { "slave": "none", "hypervisorIp4": "192.168.101.1/24", "targetVmIp4": "192.168.101.20", "subnetMask": 24 },
+        "br2": { "slave": "none", "hypervisorIp4": "192.168.110.1/24", "targetVmIp4": "192.168.110.20", "subnetMask": 24 }
       },
       "tests": [
         {
@@ -656,8 +656,8 @@ The `tests.json` file defines test environments and boot configurations:
           "bootAttempts": [
             {
               "macAddress": "AA:BB:CC:DD:EE:FF",
-              "hostIp": "192.168.101.30",
-              "targetIp": "192.168.101.20",
+              "hostIp4": "192.168.101.30",
+              "targetIp4": "192.168.101.20",
               "subsystemNQN": "nqn.2014-08.org.nvmexpress.discovery",
               "port": 4420,
               "timeout": 3000,
@@ -685,8 +685,8 @@ Specify `"default"` for any boot attempt field to use values from `defaults.sh`:
 ```json
 {
   "macAddress": "default",    // Uses HOST_MAC2 for attempt 1, HOST_MAC3 for attempt 2
-  "hostIp": "default",        // Uses br1.hostVmIp for attempt 1, br2.hostVmIp for attempt 2
-  "targetIp": "default",      // Uses br1.targetVmIp for attempt 1, br2.targetVmIp for attempt 2
+  "hostIp4": "default",        // Uses br1.hostVmIp4 for attempt 1, br2.hostVmIp4 for attempt 2
+  "targetIp4": "default",      // Uses br1.targetVmIp4 for attempt 1, br2.targetVmIp4 for attempt 2
   "subsystemNQN": "default",  // Uses SUBNQN from defaults.sh
   "port": "default",          // Uses 4420
   "timeout": "default"        // Uses 3000
@@ -698,9 +698,9 @@ Specify `"default"` for any boot attempt field to use values from `defaults.sh`:
 Each bridge interface configuration:
 
 - **slave**: Network interface to bridge (e.g., `"ens1f0np0"`) or `"none"` to skip bridging
-- **hypervisorIp**: IP for hypervisor (CIDR optional, e.g., `"192.168.101.1/24"` or `"dhcp"`)
-- **targetVmIp**: IP for target VM (CIDR optional)
-- **hostVmIp**: IP for host VM (optional, CIDR optional)
+- **hypervisorIp4**: IP for hypervisor (CIDR optional, e.g., `"192.168.101.1/24"` or `"dhcp"`)
+- **targetVmIp4**: IP for target VM (CIDR optional)
+- **hostVmIp4**: IP for host VM (optional, CIDR optional)
 - **subnetMask**: Integer (1-31), dotted decimal, or `"default"`
 
 ## Debugging boot attempts
@@ -730,7 +730,7 @@ To test if `nvme-cli` detects your namespaces as intended, follow these steps:
 - `cd host-vm`
 - run `make kill` to kill a running `host-vm` instance (it is is there)
 - `make install-local` and follow the OS installation instructions
-- (optional) set `HOST_CIDR2` and `HOST_CIDR3` environment variables to IPv4
+- (optional) set `HOST_V4_CIDR2` and `HOST_V4_CIDR3` environment variables to IPv4
   addresses of `host-vm` network interfaces
 - `./netsetup.sh [ARGS]` (use appropriate arguments for your setup)
 - SSH into the VM
@@ -826,14 +826,14 @@ by copying the `router-vm/.env.example` file into `router-vm/.env`.
 TARGET1_IFACE=eth3
 
 # This is the subnet that machines reachable over the said interface will belong into.
-TARGET1_NET=192.168.20.0/24
+TARGET1_V4_CIDR=192.168.20.0/24
 
 # This IP address is what the router-vm gets on the said interface.
-TARGET1_IP=192.168.20.1
+TARGET1_V4_IP=192.168.20.1
 
 TARGET2_IFACE=eth4
-TARGET2_IP=192.168.21.1
-TARGET2_NET=192.168.21.0/24
+TARGET2_V4_IP=192.168.21.1
+TARGET2_V4_CIDR=192.168.21.0/24
 ```
 
 The `router-vm/.env.example` file contains the default values for the IP addresses.
