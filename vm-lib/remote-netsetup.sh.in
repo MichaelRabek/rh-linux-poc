@@ -15,6 +15,72 @@ mac2iface() {
     find /sys/class/net -mindepth 1 ! -name lo -execdir sh -c "MAC=\$(cat {}/address 2>/dev/null); if [ \"\$MAC\" = \"$macaddr\" ]; then echo \"\$(basename {})\"; fi" \;
 }
 
+# Distro family: "rhel" (RHEL/Fedora/CentOS), "debian" (Debian/Ubuntu),
+# "suse" (openSUSE/SLES), or "unknown".
+detect_distro() {
+	if [ -f /etc/os-release ]; then
+		. /etc/os-release
+		case "$ID" in
+			rhel|fedora|centos|almalinux|rocky)
+				DISTRO_FAMILY="rhel" ;;
+			debian|ubuntu|linuxmint)
+				DISTRO_FAMILY="debian" ;;
+			opensuse*|sles|sled)
+				DISTRO_FAMILY="suse" ;;
+			*)
+				if [ -n "$ID_LIKE" ]; then
+					case "$ID_LIKE" in
+						*rhel*|*fedora*|*centos*)
+							DISTRO_FAMILY="rhel" ;;
+						*debian*|*ubuntu*)
+							DISTRO_FAMILY="debian" ;;
+						*suse*)
+							DISTRO_FAMILY="suse" ;;
+						*)
+							DISTRO_FAMILY="unknown" ;;
+					esac
+				else
+					DISTRO_FAMILY="unknown"
+				fi
+				;;
+		esac
+	else
+		DISTRO_FAMILY="unknown"
+	fi
+	echo "Detected distro family: $DISTRO_FAMILY (${PRETTY_NAME:-unknown})"
+}
+
+pkg_install() {
+	case "$DISTRO_FAMILY" in
+		rhel)
+			dnf install -y "$@" ;;
+		debian)
+			DEBIAN_FRONTEND=noninteractive apt-get install -y "$@" ;;
+		suse)
+			zypper install -y "$@" ;;
+		*)
+			echo "Warning: unknown distro family '$DISTRO_FAMILY', trying dnf" >&2
+			dnf install -y "$@" ;;
+	esac
+}
+
+ensure_networkmanager() {
+	if command -v nmcli &>/dev/null; then
+		return
+	fi
+	echo "NetworkManager not found, installing..."
+	case "$DISTRO_FAMILY" in
+		rhel)
+			dnf install -y NetworkManager ;;
+		debian)
+			DEBIAN_FRONTEND=noninteractive apt-get update -qq
+			DEBIAN_FRONTEND=noninteractive apt-get install -y network-manager ;;
+		suse)
+			zypper install -y NetworkManager ;;
+	esac
+	systemctl enable --now NetworkManager
+}
+
 # TPL_* below are the only envsubst placeholders in this file. Everything
 # derived from them (VMNAME, MAC2, IP2, IF2, iface, ip_config, ...) is a
 # plain runtime shell variable with a *different* name on purpose: envsubst
@@ -40,6 +106,9 @@ DNS_SERVERS="${TPL_DNS_SERVERS}"
 # See WORKAROUND_NBFT_STATIC_ROUTING_BUG in README.md / apply_nbft_workaround()
 # below.
 NBFT_WORKAROUND="${TPL_NBFT_WORKAROUND}"
+
+detect_distro
+ensure_networkmanager
 
 IF1="$(mac2iface "$MAC1")"
 IF2="$(mac2iface "$MAC2")"
@@ -207,7 +276,12 @@ else
 	echo "EDITOR=vim; export EDITOR;" >> ~/.bashrc
 	echo "alias ipshow='ip -h -c -o -br address show'" >> ~/.bashrc
 	echo "alias ipmac=\"ip -o link show | cut -d ' ' -f 2,20\"" >> ~/.bashrc
-	sed -i "s/# %wheel/%wheel/g" /etc/sudoers
+	case "$DISTRO_FAMILY" in
+		debian)
+			sed -i "s/# %sudo/%sudo/g" /etc/sudoers ;;
+		*)
+			sed -i "s/# %wheel/%wheel/g" /etc/sudoers ;;
+	esac
 fi
 
-dnf install -y nvme-cli nvmetcli libnvme
+pkg_install nvme-cli nvmetcli
